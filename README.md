@@ -4,6 +4,10 @@
 
 > **Status: M0 prototype, not Workshop-ready.** The included standalone browser preview is a locally calculated Solar System demo with a camera and view toggles. JPL multi-body synchronization, full satellite tracking, calibrated reference-frame conversion, production texture assets, and Wallpaper Engine host testing are planned milestones rather than completed features.
 
+## CI status
+
+**GitHub Actions automatic CI is temporarily disabled (2026-10-19).** The former workflow was removed from `.github/workflows/` and archived as [`docs/ci-workflow.yml.disabled`](docs/ci-workflow.yml.disabled). Pushes and pull requests no longer trigger this project's CI. Continue to run `npm run typecheck`, `npm test` and `npm run build` locally before considering a change verified. Do not re-enable CI without the owner's explicit approval. See [CI policy and restoration instructions](docs/CI.md).
+
 ## Objectives
 
 - 3D heliocentric Sun, eight planets, true depth, orbit lines, interactive camera and glow.
@@ -51,6 +55,7 @@ The local planet positions come from Astronomy Engine (heliocentric EQJ/J2000 ve
 - [Development roadmap](docs/ROADMAP.md)
 - [Data providers and refresh](docs/DATA_SOURCES.md)
 - [Wallpaper Engine integration](docs/WALLPAPER_ENGINE.md)
+- [CI status, manual checks and restoration](docs/CI.md)
 
 ## Publishing via GitHub
 
