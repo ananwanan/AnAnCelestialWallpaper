@@ -1,73 +1,72 @@
 # AnAnCelestialWallpaper
 
-**Three.js / WebGL 3D Solar System and Earth-orbit wallpaper for Wallpaper Engine.**
+**Offline-capable Three.js / WebGL solar-system wallpaper for Wallpaper Engine.**
 
-> **Status: M0 prototype, not Workshop-ready.** The included standalone browser preview is a locally calculated Solar System demo with a camera and view toggles. JPL multi-body synchronization, full satellite tracking, calibrated reference-frame conversion, production texture assets, and Wallpaper Engine host testing are planned milestones rather than completed features.
+M0–M3 and the M4 satellite pipeline are implemented. Earth orientation, texture alignment, independent Earth/Moon scale and opt-in SGP4 tracking have explicit tested contracts. **Native Wallpaper Engine acceptance remains partial:** a confirmed restart in normal mode still produced black Web previews, including a plain HTML control. Its Web helper misinterpreted IPC arguments as Chromium URLs. This is not yet a Workshop-ready release. See [validation evidence and remaining gates](docs/VALIDATION.md).
 
-## CI status
+## Run and build
 
-**GitHub Actions automatic CI is temporarily disabled (2026-10-19).** The former workflow was removed from `.github/workflows/` and archived as [`docs/ci-workflow.yml.disabled`](docs/ci-workflow.yml.disabled). Pushes and pull requests no longer trigger this project's CI. Continue to run `npm run typecheck`, `npm test` and `npm run build` locally before considering a change verified. Do not re-enable CI without the owner's explicit approval. See [CI policy and restoration instructions](docs/CI.md).
-
-## Objectives
-
-- 3D heliocentric Sun, eight planets, true depth, orbit lines, interactive camera and glow.
-- Earth-focused view with optional **real** artificial satellites (ISS, Tiangong, GPS, later filtered Starlink), using CelesTrak OMM + local SGP4.
-- Startup current-time ephemeris sync **once** when an endpoint is configured; local continuous evaluation; periodic solar sync at 1h/6h/24h.
-- Strict CelesTrak refresh minimum **2h**, irrespective of planet sync selection; satellites OFF by default.
-- Offline-first, no CDN scripts, low resource use; native Wallpaper Engine property listener, host FPS/pause handling.
-
-## Quick start (development)
+Requires Node.js 22.12 or newer.
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
-Open the Vite address. Build a static wallpaper:
-
 ```bash
 npm run typecheck
-npm run test
+npm test
 npm run build
+npm run preview
 ```
 
-Production static files are in `dist/`. In Wallpaper Engine use **Create Wallpaper** and import `dist/index.html` as a **Web wallpaper**; Wallpaper Engine copies it to its editor project folder. Configure host properties following `docs/WALLPAPER_ENGINE.md`. **Do not import the whole repo or node_modules.**
+`dist/` is the complete static wallpaper: scripts, fonts supplied by the system and all texture files work without a CDN. Import **`dist/index.html`** as a Web wallpaper in the Wallpaper Engine editor; the editor manages its project files. Do not import the repository or `node_modules`. Native import, FPS and pause acceptance are tracked separately in [Wallpaper Engine integration](docs/WALLPAPER_ENGINE.md).
 
-## Current prototype controls
+After building, run `./scripts/package-wallpaper.ps1` to create `artifacts/AnAnCelestialWallpaper-web.zip` and a SHA-256 build manifest. The ZIP is a local test import bundle; its `project.json` must be created by the Wallpaper Engine editor. Runtime library licenses are included in `public/THIRD_PARTY_NOTICES.txt` and texture credits in `public/textures/ATTRIBUTION.md`.
 
-- Left mouse drag: orbit camera. Mouse wheel: zoom.
-- **S**: Solar System view; **E**: Earth focus (basic placeholder), **R**: reset camera; **O**: orbit lines.
-- Top-right UI: view switch, orbit visibility and illustrative timeline speeds.
+## Current features and controls
 
-The local planet positions come from Astronomy Engine (heliocentric EQJ/J2000 vectors). Body sizes, orbital apparent spacing and textures are visually exaggerated and should not be used as physical size comparisons.
+- Textured Sun, eight planets and Moon; Sun glow/corona, Saturn rings, subtle stars and inclined ephemeris-sampled paths.
+- Camera drag/wheel, smooth overview/inner/outer presets, calibrated Earth close-up and physical Earth–Moon overview; labels avoid each other and the HUD.
+- The **显示与时间** drawer controls labels, paths, mouse interaction, Low/Medium/High quality, UTC date jump, time speed and 1/6/24-hour remote-comparison cadence.
+- Footer pause freezes simulation time and resumes the last positive rate; **回到现在** resets to current UTC at 1×. Host pause suspends rendering and comparison polling while the wall-clock simulation catches up on resume.
+- Keys: **S** Solar System, **E** Earth, **R** reset camera, **O** paths, **L** labels, **Space** simulation pause/resume, **Esc** close settings. Shortcuts preserve normal input/button keyboard behavior.
+- Opt-in **显示预测卫星** with ISS/Tiangong or GPS groups, satellite selection, NORAD ID/OMM epoch/age/altitude, and cyan recent / gold future predicted arcs. Disabled by default; disabling aborts requests and clears propagation/draw work. A configured shared GP service is required for fresh data.
 
-## Data contracts & caveats
+The Solar view compresses orbital distances (`26 × ln(1 + distanceAU)`), exaggerates body sizes and expands the geocentric Moon offset 70×. Earth focus uses a separate uniform km scale for Earth, Moon and satellites. Earth's pole, spin and Greenwich texture alignment use a local sidereal-time/precession/nutation model; UT1≈UTC and omitted polar motion limit precision. Other bodies' poles and lunar surface orientation remain illustrative. See [Earth calibration](docs/EARTH_ORIENTATION.md).
 
-- NASA Horizons: optional raw-response Cloudflare proxy in `workers/horizons`; see [setup, API contract and deployment status](docs/HORIZONS_PROXY.md). It is separate from the planned normalized `/api/ephemeris` provider. **Do not set `VITE_EPHEMERIS_BASE_URL` to this raw proxy:** the current wallpaper adapter expects a different schema. The local preview works without either service.
-- Artificial satellites: satellite.js/SGP4 is planned and must not be represented as fully implemented in this M0 preview. See `docs/ROADMAP.md`.
-- CelesTrak rates: GP dataset updates roughly every two hours; large dataset polling too frequently can be blocked. See official usage policy.
-- All assets must be local in the Workshop bundle, documented in `public/textures/ATTRIBUTION.md`.
+## Local astronomy and optional Horizons comparison
 
-## Documentation
+The scene always uses local Astronomy Engine heliocentric EQJ/J2000 positions at the displayed simulation time. Moon placement uses Earth plus a separately computed geocentric Moon vector.
 
-- [Agent instructions](AGENTS.md)
+The public Cloudflare service is deployed at [horizons.ananwanan.cc](https://horizons.ananwanan.cc/health). It provides both constrained raw Horizons output and a real normalized `/api/ephemeris?at=<UTC ISO>` route for eight planets plus Moon. The production configuration contains only this public service URL:
+
+```dotenv
+VITE_EPHEMERIS_BASE_URL=https://horizons.ananwanan.cc
+```
+
+Set the **service base**, not `/api/horizons.api`. A startup operation requests current real UTC once; later requests follow the selected wall-clock cadence. Time warp never causes per-frame NASA calls. The Worker caches and serializes upstream access; the browser validates metadata, caches usable comparisons and backs off on failure. A cold nine-body request may take tens of seconds; local rendering starts immediately.
+
+`Live/Sync` and `Cached` refer to the remote **comparison**, not the rendered trajectory. Remote ICRF and local EQJ axes are closely aligned but are not silently treated as identical. The recorded JPL fixture and documented tolerances provide a model sanity check, not research/navigation accuracy. Offline state remains `Local prediction` or a clearly identified cached comparison.
+
+For a fully offline build, set `VITE_EPHEMERIS_BASE_URL=` in ignored `.env.production.local` and rebuild. The development server has no remote endpoint unless one is configured for that mode. See [provider contract and deployment](docs/HORIZONS_PROXY.md).
+
+## Scope and assets
+
+`showSatellites` defaults to false. `satellite.js` 7.1.0 propagates validated scoped CelesTrak OMM at the simulation epoch. TEME→pseudo Earth-fixed→EQJ retains documented approximations; the UI labels predictions accordingly and refuses propagation far outside each source epoch. Client and shared Worker persist ≥2-hour source refresh reservations, including failures, reloads and toggles. Never configure a nonexistent GP service; [SATELLITES.md](docs/SATELLITES.md) records deployment and provider details. Optional Starlink, night-light/cloud layers, full device/performance profiling and Workshop release remain later work.
+
+All eleven bundled texture files are credited to Solar System Scope / INOVE under CC BY 4.0, with per-file URLs and SHA-256 provenance in [texture attribution](public/textures/ATTRIBUTION.md). The maps include the creator's edited colors and fill for unmapped regions. Source-code licensing still requires an owner decision; texture licensing does not license repository code.
+
+## Validation and documentation
+
+**GitHub Actions CI remains intentionally paused (2026-10-19).** Run local checks before considering changes verified. The archived workflow must not be restored without owner authorization; see [CI policy](docs/CI.md).
+
+- [Current validation and acceptance boundaries](docs/VALIDATION.md)
+- [Roadmap](docs/ROADMAP.md)
 - [Architecture](docs/ARCHITECTURE.md)
-- [Development roadmap](docs/ROADMAP.md)
-- [Data providers and refresh](docs/DATA_SOURCES.md)
-- [Horizons Cloudflare proxy](docs/HORIZONS_PROXY.md)
+- [Data sources and scientific limits](docs/DATA_SOURCES.md)
+- [Earth orientation and texture calibration](docs/EARTH_ORIENTATION.md)
+- [Satellite data, frame and freshness policy](docs/SATELLITES.md)
+- [Cloudflare Horizons API](docs/HORIZONS_PROXY.md)
 - [Wallpaper Engine integration](docs/WALLPAPER_ENGINE.md)
-- [CI status, manual checks and restoration](docs/CI.md)
-
-## Publishing via GitHub
-
-Create an empty repository named `AnAnCelestialWallpaper` in your GitHub account (do not initialize README/license), then:
-
-```bash
-git init -b main
-git add .
-git commit -m "chore: initialize 3D celestial wallpaper"
-git remote add origin https://github.com/ananwanan/AnAnCelestialWallpaper.git
-git push -u origin main
-```
-
-The repository has **no license file yet** by design; decide source-code and third-party asset distribution terms before publication.
+- [Agent instructions](AGENTS.md)

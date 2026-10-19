@@ -1,7 +1,7 @@
-# Satellite tracking module (M4 planned)
+# Opt-in satellite prediction
 
-This folder is intentionally not populated with fabricated satellite motion in the M0 browser preview.
+`omm.ts` validates scoped CelesTrak JSON orbital elements; `propagation.ts` evaluates `satellite.js` SGP4 at the displayed simulation UTC. Outputs retain Earth-centered TEME/km and convert through pseudo Earth-fixed axes into geocentric EQJ/km for the independent Earth scene. UT1≈UTC and omission of polar motion are explicit approximations.
 
-Implementation order: CelesTrak JSON OMM narrow groups -> `satellite.js` SGP4 -> tested TEME/ECEF/inertial transforms -> Earth-focus scene -> trails/labels/filtering -> minimum 2h source refresh and stale-status UI.
+`sync/SatelliteSync.ts` owns source access, cancellation, cooldowns and schema cache. The renderer only consumes immutable normalized snapshots. Tracking defaults off; no decorative or stale static satellite positions stand in for predictions.
 
-`showSatellites` is part of the Wallpaper Engine settings contract, default `false`. Until M4, toggling it does **not** imply real satellite positions are rendered.
+See [source policy, epoch windows, endpoint deployment and reference tests](../../docs/SATELLITES.md).

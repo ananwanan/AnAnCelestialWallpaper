@@ -1,0 +1,8 @@
+{
+  "url": "https://horizons.ananwanan.cc/api/ephemeris?at=2026-10-19T00%3A00%3A00.000Z",
+  "recordedAt": "2026-10-19T14:08:28.873Z",
+  "source": "JPL-Horizons",
+  "apiVersion": "1.2",
+  "retrievedAt": "2026-10-19T12:59:30.900Z",
+  "purpose": "Live JPL reference vectors at an exact hourly sample; local comparison only."
+}

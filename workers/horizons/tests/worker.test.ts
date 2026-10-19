@@ -2,6 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import worker, { HorizonsGate, type Env } from '../src/index';
 import { CACHE_SCHEMA_VERSION, CACHE_TTL_MS, MAX_REQUESTS_PER_HOUR, STALE_TTL_MS, UPSTREAM_TIMEOUT_MS, canonicalQuery } from '../src/policy';
 import { VALID_BODY } from './fixture';
+import { EPHEMERIS_IDS, BODY_COMMANDS } from '../../../src/astronomy/ephemerisSnapshot';
+import { bodyQuery } from '../src/ephemeris';
+import { syntheticBody } from './normalizedFixture';
 
 function createGate(initial: Record<string, unknown> = {}) {
   const records = new Map(Object.entries(initial));
@@ -197,5 +200,80 @@ describe('public routing and CORS', () => {
     ] as const;
     for (const [request, status] of cases) expect((await worker.fetch(request, bindings)).status).toBe(status);
     expect(get).not.toHaveBeenCalled();
+  });
+});
+
+describe('complete normalized shared daily batch', () => {
+  const now = Date.UTC(2026, 9, 19, 12);
+  const start = Date.UTC(2026, 9, 19);
+  const normalizedRequest = (at = now) => new Request(`https://worker.example/api/ephemeris?at=${encodeURIComponent(new Date(at).toISOString())}`);
+  async function cachedBodies(retrievedAt: number, count = 9) {
+    return Object.fromEntries(await Promise.all(EPHEMERIS_IDS.slice(0, count).map(async (id) => {
+      const key = await keyFor(new Request(`https://worker.example/api/horizons.api?${bodyQuery(id, start)}`));
+      return [key, { schemaVersion: CACHE_SCHEMA_VERSION, body: syntheticBody(id), retrievedAt }];
+    })));
+  }
+  it('serves a complete validated nine-body ICRF comparison from shared raw cache without upstream calls', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(now);
+    const fetch = vi.fn(); vi.stubGlobal('fetch', fetch);
+    const { gate, ready } = createGate(await cachedBodies(now - 60_000)); await ready();
+    const response = await gate.fetch(normalizedRequest());
+    const snapshot = await response.json() as { referenceFrame: string; epoch: string; states: unknown[]; origin: string };
+    expect(response.status).toBe(200); expect(response.headers.get('X-Horizons-Cache')).toBe('HIT');
+    expect(snapshot.referenceFrame).toBe('ICRF'); expect(snapshot.origin).toBe('Sun');
+    expect(snapshot.epoch).toBe(new Date(now).toISOString()); expect(snapshot.states).toHaveLength(9);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  it('coalesces a cold UTC-day batch, serializes all source requests and interpolates each caller epoch', async () => {
+    vi.useFakeTimers({ now });
+    const started: number[] = []; let active = 0, peak = 0;
+    const fetch = vi.fn(async (input: string) => {
+      active++; peak = Math.max(peak, active); started.push(Date.now());
+      await Promise.resolve(); active--;
+      const command = new URL(input).searchParams.get('COMMAND')!.replaceAll("'", '');
+      const id = EPHEMERIS_IDS.find((body) => BODY_COMMANDS[body] === command)!;
+      return new Response(syntheticBody(id), { headers: { 'Content-Type': 'application/json' } });
+    }); vi.stubGlobal('fetch', fetch);
+    const { gate, ready } = createGate(); await ready();
+    const first = gate.fetch(normalizedRequest(now + 1234));
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    const sameDay = gate.fetch(normalizedRequest(now + 5678));
+    const rawBusy = await gate.fetch(request('COMMAND=499')); expect(rawBusy.status).toBe(429);
+    await vi.advanceTimersByTimeAsync(20_000);
+    const responses = await Promise.all([first, sameDay]);
+    for (const [index, response] of responses.entries()) {
+      expect(response.status).toBe(200);
+      const snapshot = await response.json() as { epoch: string; states: unknown[] };
+      expect(snapshot.epoch).toBe(new Date(now + (index ? 5678 : 1234)).toISOString()); expect(snapshot.states).toHaveLength(9);
+    }
+    expect(fetch).toHaveBeenCalledTimes(9); expect(peak).toBe(1);
+    expect(started.slice(1).every((time, index) => time - started[index]! >= 2000)).toBe(true);
+  });
+  it('checks complete-batch hourly budget before making partial upstream work', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(now); const fetch = vi.fn(); vi.stubGlobal('fetch', fetch);
+    const { gate, ready } = createGate({ gate: { schemaVersion: CACHE_SCHEMA_VERSION, hourStart: now, requests: 55, nextAllowedAt: 0, failures: 0 } }); await ready();
+    const response = await gate.fetch(normalizedRequest()); expect(response.status).toBe(429); expect(fetch).not.toHaveBeenCalled();
+  });
+  it('returns an explicitly stale complete last-good set during provider backoff', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(now); const fetch = vi.fn(); vi.stubGlobal('fetch', fetch);
+    const { gate, ready } = createGate({ ...await cachedBodies(now - CACHE_TTL_MS - 1), gate: { schemaVersion: CACHE_SCHEMA_VERSION, hourStart: now, requests: 1, nextAllowedAt: now + 3_600_000, failures: 1 } }); await ready();
+    const response = await gate.fetch(normalizedRequest());
+    expect(response.status).toBe(200); expect(response.headers.get('X-Horizons-Cache')).toBe('STALE'); expect(response.headers.get('Retry-After')).toBe('3600');
+    expect((await response.json() as { states: unknown[] }).states).toHaveLength(9); expect(fetch).not.toHaveBeenCalled();
+  });
+  it('never reports partial eight-body success when the missing source fails', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(now);
+    const fetch = vi.fn(async () => new Response('failure', { status: 503 })); vi.stubGlobal('fetch', fetch);
+    const { gate, ready } = createGate(await cachedBodies(now - 1000, 8)); await ready();
+    const response = await gate.fetch(normalizedRequest()); expect(response.status).toBe(502);
+    expect((await response.json() as { states?: unknown[] }).states).toBeUndefined(); expect(fetch).toHaveBeenCalledTimes(1);
+  });
+  it('aborts a hanging upstream response body at the 15s source limit', async () => {
+    vi.useFakeTimers({ now }); const cancel = vi.fn();
+    const fetch = vi.fn(async () => new Response(new ReadableStream({ pull() {}, cancel }), { headers: { 'Content-Type': 'application/json' } })); vi.stubGlobal('fetch', fetch);
+    const { gate, ready } = createGate(); await ready();
+    const pending = gate.fetch(normalizedRequest()); await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    await vi.advanceTimersByTimeAsync(15_000); const response = await pending;
+    expect(response.status).toBe(502); expect(cancel).toHaveBeenCalledTimes(1); expect(fetch).toHaveBeenCalledTimes(1);
   });
 });

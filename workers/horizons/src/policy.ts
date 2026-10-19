@@ -139,11 +139,14 @@ export function errorResponse(message: string, status: number, retryMs = 0): Res
   return new Response(JSON.stringify({ error: message }), { status, headers });
 }
 
-export async function boundedText(response: Response): Promise<string> {
+export async function boundedText(response: Response, signal?: AbortSignal): Promise<string> {
+  if (signal?.aborted) { void response.body?.cancel().catch(() => undefined); throw new Error('Horizons request aborted.'); }
   const declared = Number(response.headers.get('Content-Length'));
-  if (declared > MAX_RESPONSE_BYTES) { await response.body?.cancel(); throw new Error('Upstream response exceeds size limit.'); }
+  if (declared > MAX_RESPONSE_BYTES) { void response.body?.cancel().catch(() => undefined); throw new Error('Upstream response exceeds size limit.'); }
   if (!response.body) throw new Error('Empty upstream response.');
   const reader = response.body.getReader();
+  const abort = () => { void reader.cancel('Horizons request aborted').catch(() => undefined); };
+  signal?.addEventListener('abort', abort, { once: true });
   const chunks: Uint8Array[] = [];
   let total = 0;
   try {
@@ -151,10 +154,12 @@ export async function boundedText(response: Response): Promise<string> {
       const { done, value } = await reader.read();
       if (done) break;
       total += value.byteLength;
-      if (total > MAX_RESPONSE_BYTES) { await reader.cancel(); throw new Error('Upstream response exceeds size limit.'); }
+      if (total > MAX_RESPONSE_BYTES) throw new Error('Upstream response exceeds size limit.');
       chunks.push(value);
     }
-  } finally { reader.releaseLock(); }
+  } catch (error) { void reader.cancel('Invalid Horizons body').catch(() => undefined); throw error; }
+  finally { signal?.removeEventListener('abort', abort); reader.releaseLock(); }
+  if (signal?.aborted) throw new Error('Horizons request aborted.');
   const bytes = new Uint8Array(total);
   let offset = 0;
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }

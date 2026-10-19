@@ -1,43 +1,65 @@
-# Wallpaper Engine Web wallpaper integration
+# Wallpaper Engine integration
 
-Official docs: https://docs.wallpaperengine.io/en/web/first/gettingstarted.html
+The runtime is a **Web wallpaper**, not Electron. The production browser build is working; native acceptance is still open. [VALIDATION.md](VALIDATION.md) records the host attempt and distinguishes it from browser checks.
 
-## Import
+## Current host evidence
 
-1. `npm install && npm run build`.
-2. Open Wallpaper Engine editor → Create Wallpaper → import **`dist/index.html`** (Web wallpaper).
-3. The editor will **copy** output files into its own project directory and manage `project.json`. Do not import the whole repository, `node_modules`, or source folder.
-4. From Editor → Edit → Change project settings, create user properties with exact keys below.
-5. Use Workshop → Share wallpaper to publish, only after testing/licensing checks; editor can update the same Workshop item later.
+The earlier 2026-10-19 attempt used an old `-safe -silent -service` process and failed with `Crashpad_NotConnectedToHandler`. A real restart at 23:40 Asia/Shanghai replaced PID7472 with PID39248, started without `-safe`; the startup recovery notice was acknowledged. Both the production wallpaper and a no-JavaScript/no-WebGL/no-network HTML control still rendered black. The Web helper opened Chromium tabs for its own IPC arguments: `0.0.153.80` exactly encodes PID39248, alongside `WPEWebIpcHandler` and `monitor200` values.
 
-## Properties to add in the editor
+This localizes failure before the wallpaper's HTML executes. Installed 2.8.42 Web helper/CEF binaries have valid vendor signatures; the evidence does not establish corruption or the vendor's internal cause. A matching symptom has a [developer acknowledgement](https://www.reddit.com/r/wallpaperengine/comments/1ua5yul/comment/osoapu3/). Steam file verification was executed on 2026-10-20 at 00:01 Asia/Shanghai and completed with `No Error`; post-verification native results are in VALIDATION.md. Native display, editor properties, FPS, pause/resume and offline operation remain unverified until a working host can execute a Web wallpaper.
+
+No editor-created project or Workshop upload is claimed, and no dummy `project.json` has been generated.
+
+## Build and editor import
+
+```powershell
+npm ci
+npm run typecheck
+npm test
+npm run build
+```
+
+Open Wallpaper Engine's editor, choose **Create Wallpaper**, and select `D:\code\AnAnCelestialWallpaper\dist\index.html` as a Web wallpaper. The editor copies the output into its own project directory and manages `project.json`. Keep scripts, textures, attribution and provenance files together. Do not import `node_modules` or repository sources.
+
+Add user properties in **Edit → Change project settings** using the exact names below. Publishing remains a separate owner-approved M6 operation.
+
+## Host property contract
 
 | Key | Type | Values/default |
 |---|---|---|
-| `viewMode` | combo | `solar`, `earth`; default `solar` |
-| `showSatellites` | bool | default `false` |
-| `satelliteGroup` | combo | `stations`, `gps`, eventually `starlink`; default `stations` |
-| `syncInterval` | combo | `1`, `6`, `24`; default `6` |
-| `timeScale` | slider | 0–86400; default `1` |
-| `showOrbits` | bool | default `true` |
-| `showLabels` | bool | default `true` |
-| `enableMouse` | bool | default `true` |
-| `quality` | combo | `low`, `medium`, `high`; default `medium` |
+| `viewMode` | combo | `solar`, `earth`; `solar` |
+| `showSatellites` | bool | `false`; enabling lazily requests scoped GP, disabling aborts requests and clears propagation/drawing |
+| `satelliteGroup` | combo | `stations`, `gps`, future `starlink`; `stations` |
+| `syncInterval` | combo | `1`, `6`, `24`; `6` hours |
+| `timeScale` | slider | 0–86400; `1` |
+| `showOrbits` | bool | `true` |
+| `showLabels` | bool | `true` |
+| `enableMouse` | bool | `true` |
+| `quality` | combo | `low`, `medium`, `high`; `medium` |
 
-The `wallpaperPropertyListener` must be assigned as a global before expensive initialization. Handle **partial updates**, `applyGeneralProperties({fps})` and `setPaused(bool)`. In M0 the bridge supports core view/orbits/time/fps but not yet full satellite display or texture quality controls.
+The bridge is installed before DOM/WebGL initialization. `applyUserProperties` receives wrapped partial values; unrelated settings are retained. `applyGeneralProperties({fps})` accepts the host's plain FPS value. `setPaused(true)` suspends rendering; resume recomputes the displayed epoch from the wall clock. This differs from the footer pause, which sets `timeScale=0` and freezes simulation time. Automated bridge/clock/loop tests pass; delivery by the actual native host is pending.
 
-## Performance / manual checklist
+## Direct preview and property reproduction
 
-- [ ] Works without Internet and never relies on CDN scripts.
-- [ ] Supports Wallpaper Engine's FPS limit and pause/focus behavior; no forced 60fps override.
-- [ ] Solar / Earth view at 1080p, 1440p, 4K, 21:9 and 32:9.
-- [ ] `showSatellites=false` triggers no satellite API requests.
-- [ ] `showSatellites=true` shows appropriate satellite selections with epoch/staleness.
-- [ ] With all network requests blocked, local celestial motion continues.
-- [ ] Full bundled textures have documented rights for redistribution.
-- [ ] Production build runs with relative paths (`base: './'`).
+The [official CLI guide](https://help.wallpaperengine.io/en/functionality/cli.html) documents direct `index.html` files for Web wallpapers, window previews and property changes. These commands reproduce the intended route; they are not evidence of a successful native render in this environment. Set the executable to the real installation path and start Wallpaper Engine normally first:
 
-**Wallpaper Engine integration has not been verified until tested in the actual desktop application.**
+```powershell
+$wallpaperEngine = 'C:\Program Files (x86)\Steam\steamapps\common\wallpaper_engine\wallpaper64.exe'
+& $wallpaperEngine -control openWallpaper -file 'D:\code\AnAnCelestialWallpaper\dist\index.html' -playInWindow 'AnAn Celestial validation' -width 1920 -height 1080
+& $wallpaperEngine -control applyProperties -location 'AnAn Celestial validation' -properties 'RAW~({"showLabels":false,"quality":"low"})~END'
+```
 
-Official FPS API: https://docs.wallpaperengine.io/en/web/performance/fps.html
-Official properties API: https://docs.wallpaperengine.io/en/web/customization/properties.html
+After a real web preview works, check property changes one at a time, native FPS at 15/30, pause/resume, offline behavior and fullscreen performance settings. Use the same built `dist/` for browser and host comparisons.
+
+## Acceptance checklist
+
+- [x] Relative-path production build and complete local texture assets.
+- [x] Tested early listener, property normalization, partial updates, FPS cap and pause/resume logic in automated tests.
+- [x] Browser production scene shows local Sun/eight planets/Moon and loads eleven textures without failure.
+- [x] Browser quality/control matrix and five rendered resolution captures, cold/warm offline behavior, recovery and simulated host callbacks; see [validation](VALIDATION.md). These are not native host evidence.
+- [ ] Native Web preview/editor import visibly works.
+- [ ] Native partial properties, FPS and pause delivery verified.
+- [ ] Native offline operation and no CelesTrak requests verified.
+- [ ] Two-hour resource soak and 1080p/1440p/4K/ultrawide host matrix.
+
+References: [Web workflow](https://docs.wallpaperengine.io/en/web/first/gettingstarted.html), [property listener](https://docs.wallpaperengine.io/en/web/api/propertylistener.html), [FPS](https://docs.wallpaperengine.io/en/web/performance/fps.html).

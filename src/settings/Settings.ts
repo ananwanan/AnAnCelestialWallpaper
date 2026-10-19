@@ -21,19 +21,47 @@ export const DEFAULT_SETTINGS: WallpaperSettings = {
   enableMouse: true, quality: 'medium', fps: 30, paused: false,
 };
 
-export function sanitizeSettings(previous: WallpaperSettings, changes: Record<string, unknown>): WallpaperSettings {
-  const s = { ...previous };
-  if (changes.viewMode === 'solar' || changes.viewMode === 'earth') s.viewMode = changes.viewMode;
-  if (typeof changes.showSatellites === 'boolean') s.showSatellites = changes.showSatellites;
-  if (changes.satelliteGroup === 'stations' || changes.satelliteGroup === 'gps' || changes.satelliteGroup === 'starlink') s.satelliteGroup = changes.satelliteGroup;
-  if ([1, 6, 24].includes(Number(changes.syncInterval))) s.syncInterval = Number(changes.syncInterval) as 1 | 6 | 24;
-  if (typeof changes.timeScale === 'number' && Number.isFinite(changes.timeScale)) s.timeScale = Math.max(0, Math.min(86400, changes.timeScale));
-  for (const key of ['showOrbits', 'showLabels', 'enableMouse'] as const) {
-    const value = changes[key];
-    if (typeof value === 'boolean') s[key] = value;
+/** Only named hidden combo values are supported; editor option indices are not values. */
+export const USER_PROPERTY_KEYS = [
+  'viewMode', 'showSatellites', 'satelliteGroup', 'syncInterval', 'timeScale',
+  'showOrbits', 'showLabels', 'enableMouse', 'quality',
+] as const satisfies readonly (keyof WallpaperSettings)[];
+
+export function isPropertyRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/** Read only an object's own data properties, ignoring inherited values and accessors. */
+export function ownProperty(value: unknown, key: string): unknown {
+  if (!isPropertyRecord(value)) return undefined;
+  const descriptor = Object.getOwnPropertyDescriptor(value, key);
+  return descriptor && 'value' in descriptor ? descriptor.value : undefined;
+}
+
+/** Validate a partial change without introducing defaults for omitted or invalid values. */
+export function normalizeSettingChanges(changes: unknown): Partial<WallpaperSettings> {
+  const patch: Partial<WallpaperSettings> = {};
+  const viewMode = ownProperty(changes, 'viewMode');
+  if (viewMode === 'solar' || viewMode === 'earth') patch.viewMode = viewMode;
+  const satelliteGroup = ownProperty(changes, 'satelliteGroup');
+  if (satelliteGroup === 'stations' || satelliteGroup === 'gps' || satelliteGroup === 'starlink') patch.satelliteGroup = satelliteGroup;
+  const syncInterval = ownProperty(changes, 'syncInterval');
+  if (syncInterval === 1 || syncInterval === '1') patch.syncInterval = 1;
+  if (syncInterval === 6 || syncInterval === '6') patch.syncInterval = 6;
+  if (syncInterval === 24 || syncInterval === '24') patch.syncInterval = 24;
+  const timeScale = ownProperty(changes, 'timeScale');
+  if (typeof timeScale === 'number' && Number.isFinite(timeScale)) patch.timeScale = Math.max(0, Math.min(86400, timeScale));
+  for (const key of ['showSatellites', 'showOrbits', 'showLabels', 'enableMouse', 'paused'] as const) {
+    const value = ownProperty(changes, key);
+    if (typeof value === 'boolean') patch[key] = value;
   }
-  if (changes.quality === 'low' || changes.quality === 'medium' || changes.quality === 'high') s.quality = changes.quality;
-  if (typeof changes.fps === 'number' && changes.fps > 0 && Number.isFinite(changes.fps)) s.fps = Math.min(240, changes.fps);
-  if (typeof changes.paused === 'boolean') s.paused = changes.paused;
-  return s;
+  const quality = ownProperty(changes, 'quality');
+  if (quality === 'low' || quality === 'medium' || quality === 'high') patch.quality = quality;
+  const fps = ownProperty(changes, 'fps');
+  if (typeof fps === 'number' && fps > 0 && Number.isFinite(fps)) patch.fps = Math.min(240, fps);
+  return patch;
+}
+
+export function sanitizeSettings(previous: WallpaperSettings, changes: unknown): WallpaperSettings {
+  return { ...previous, ...normalizeSettingChanges(changes) };
 }

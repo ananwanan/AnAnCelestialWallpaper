@@ -13,8 +13,8 @@
     "UPSTREAM_USER_AGENT": "AnAnCelestialWallpaper/0.1.0 (+https://github.com/ananwanan/AnAnCelestialWallpaper)"
   },
   "durable_objects": {
-    "bindings": [{ "name": "HORIZONS_GATE", "class_name": "HorizonsGate" }]
+    "bindings": [{ "name": "HORIZONS_GATE", "class_name": "HorizonsGate" }, { "name": "SATELLITES_GATE", "class_name": "SatellitesGate" }]
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["HorizonsGate"] }],
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["HorizonsGate"] }, { "tag": "v2-satellites", "new_sqlite_classes": ["SatellitesGate"] }],
   "observability": { "enabled": false }
 }

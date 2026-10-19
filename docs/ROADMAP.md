@@ -1,68 +1,74 @@
 # Roadmap and acceptance criteria
 
-Status key: `[x]` implemented in initial scaffolding, `[~]` partial implementation, `[ ]` planned/unverified.
+Status: `[x]` implemented with stated evidence; `[~]` partial or acceptance still open; `[ ]` planned. Implementation, browser verification and native host acceptance are separate. Current evidence is in [VALIDATION.md](VALIDATION.md).
 
-**CI policy (2026-10-19):** Automatic GitHub Actions CI is **temporarily disabled**; active `.github/workflows/ci.yml` was removed and archived at `docs/ci-workflow.yml.disabled`. Validation remains a manual/local requirement (`npm run typecheck`, `npm test`, `npm run build`). Do not enable CI without owner approval. See [CI status and reactivation](CI.md).
+**CI remains paused (2026-10-19).** Run local typecheck, tests and production build. Do not restore the archived GitHub Actions workflow without owner authorization; see [CI.md](CI.md).
 
-## M0 — Bootstrap / offline prototype
+## M0 — Foundation: implemented; native host gate partial
 
-- [x] Vite/TypeScript/Three.js skeleton and relative production assets.
-- [x] Basic offline Sun and eight planets, astronomy-engine heliocentric positions, orbitable camera.
-- [x] Minimal Earth-focused scene and browser controls (not final quality).
-- [x] AGENTS.md, architecture, data policy, integration notes.
-- [x] Automatic CI intentionally paused; previous workflow retained in `docs/ci-workflow.yml.disabled` for later restoration.
-- [x] Local typecheck, tests and production build verified on 2026-10-19 in the existing dependency checkout; clean-install and Wallpaper Engine acceptance remain separate.
-- [ ] Verified Wallpaper Engine import and user properties in actual application.
+- [x] Strict TypeScript/Vite/Three.js skeleton, relative assets and offline Sun/eight-planet scene.
+- [x] Deterministic UTC wall-clock, early host listener, validated partial properties and host FPS/pause lifecycle.
+- [x] Clean `npm ci` with zero reported vulnerabilities, local typecheck/test/build and production browser rendering.
+- [~] Actual Wallpaper Engine import/preview: confirmed normal-mode restart at 23:40 Asia/Shanghai (PID 39248; no `-safe`) still produced black previews for both the production wallpaper and no-JavaScript/no-WebGL HTML control. The Web helper treated IPC values as Chromium addresses. Native gate awaits a healthy host; evidence in VALIDATION.md.
+- [ ] Native editor property delivery, FPS/pause and desktop operation verified in Wallpaper Engine.
 
-**Exit:** Clean `npm install`, local typecheck/test/build all succeed (CI paused); offline scene is visible in a browser and Wallpaper Engine.
+**Exit remains open:** native web wallpaper must visibly render and its properties work in the real host. Browser evidence does not close this gate.
 
-## M1 — Solar visual quality
+## M1 — Solar visual quality: implemented and browser verified
 
-- [ ] Redistributable planet sphere textures with accurate provenance; artist-grade Sun glow, corona and controlled bloom.
-- [ ] Saturn rings, Earth's Moon, stars, inclined trajectory lines, orbit labels, zoom/preset transitions.
-- [ ] No GC spikes, responsive 16:9/21:9/32:9; FPS/user quality budget.
+- [x] Eleven local Sun/planet/Moon/ring maps, verified creator CC BY 4.0 attribution and SHA-256 provenance.
+- [x] Textured spheres, Sun glow/corona, Saturn rings, local ephemeris Moon, stars and inclined sampled trajectories.
+- [x] Smooth overview/inner/outer presets, separate basic Earth view, collision-aware labels and mouse toggle.
+- [x] Low/Medium/High shared geometry, DPR/star budgets, capped scheduling and resource cleanup.
+- [x] Production browser scene loaded all eleven assets with zero failures and 24 draw calls; default configured cap is 30 FPS.
+- [x] Frame-wait captures at 1920×1080, 2560×1440, 3840×2160, 2560×1080 and 3840×1080: ten labels each, zero label/HUD overlaps or viewport overflow. This is not a 4K GPU performance result.
+- [x] Browser drawer, presets, basic Earth demo, time/UTC/reset, paths/labels, mouse and keyboard interactions verified. Six quality switches retained 13 geometries / 13 textures; short toggle checks do not replace a soak.
+- [ ] Two-hour CPU/memory/GPU soak and representative iGPU/dGPU measurements.
 
-**Exit:** M1 visual checklist and texture attribution signed off.
+**Browser exit verified:** visual assets, layout and controls passed within recorded coverage. Native acceptance, real GPU/FPS measurements and long-duration soak remain open; calibrated Earth/body orientation is M3.
 
-## M2 — Time, remote synchronization & caching
+## M2 — Time, Horizons comparison and caching: implemented
 
-- [ ] UTC simulation controls, clock suspend/resume and time warp tests.
-- [ ] NASA Horizons adapter with schema/units/frame guard and current-time startup snapshot.
-- [ ] Valid interpolation of time-window position/velocity samples, or documented local evaluation with remote validation.
-- [ ] 1/6/24h refresh scheduler, offline cache, exponential-backoff and source status badge.
-- [x] Optional constrained raw Horizons Cloudflare Worker in `workers/horizons`, deployed and live verified on 2026-10-19 through primary custom domain `horizons.ananwanan.cc` and the `workers.dev` fallback. HTTPS/cache/CORS/rejection checks passed; URLs and evidence are in [HORIZONS_PROXY.md](HORIZONS_PROXY.md). This does not complete normalized multi-body synchronization.
+- [x] UTC timeline, pause/resume, rate re-anchoring, jump/reset and dropped-frame/long-resume tests.
+- [x] Deployed normalized nine-body `/api/ephemeris` plus constrained raw Horizons route.
+- [x] Strict source/version/body/frame/unit/time validation and bounded hourly cubic Hermite interpolation.
+- [x] One startup real-UTC comparison, 1/6/24-hour wall-clock scheduling, versioned browser cache and local fallback.
+- [x] Capped backoff/jitter, source `Retry-After`, timeouts, cancellation and readable source/cache labels.
+- [x] One shared Cloudflare Durable Object serializes/caches upstream traffic; live normalized MISS→HIT and raw HIT checks passed on the custom domain.
+- [x] Captured JPL fixture with provenance, nine-body same-epoch sanity comparison and separate geocentric Moon parent test; tolerances and model limits documented.
+- [x] Production browser startup used the deployed normalized service: `Cached`, comparison passed, eleven assets loaded without failure.
+- [x] Browser cold uncached API-blocked startup, warm cached offline use and real-service recovery verified; local frames continued with no CelesTrak or external runtime asset requests.
+- [x] Actual page callback simulation verified pause/no frames/no HTTP, resume and numeric FPS/partial properties. Native delivery and a true document-hidden/minimized transition remain unverified.
 
-**Exit:** Current time and time-scaled trajectory match known reference vectors within documented tolerance, even after 24h offline.
+Remote ICRF samples validate local EQJ output at the same UTC epoch; the scene remains local. `Live/Sync` labels a reference operation, not an externally driven rendered trajectory or precision certification.
 
-## M3 — Earth focus
+## M3 — Calibrated Earth focus: implemented
 
-- [ ] Verified Earth orientation and rotation frame; high-quality cloud/day/night texture with license.
-- [ ] Smooth focus camera transition, Earth scale calibration, globe labels and physically reasonable lighting.
+- [x] GAST spin plus EQD→EQJ precession/nutation, independent ERFA/SOFA reference and actual SphereGeometry UV checks.
+- [x] Calibrated Earth/Moon focus, shared physical km scale, ephemeris Moon orbit, Sun direction and Earth–Moon camera.
+- [x] Existing licensed static day map retained; optional night/cloud layers were unnecessary for this milestone.
+- [x] Explicit UT1≈UTC / no polar-motion limitation; other body poles and lunar surface orientation remain illustrative.
+- [x] Browser scene/layout, Earth–Moon/quality/epoch jumps and portrait/32:9 coverage passed; records in VALIDATION.md. Native acceptance remains a separate open gate.
 
-**Exit:** Earth orientation/reference-frame tests pass; cinematic view runs smoothly.
+## M4 — Artificial satellites: implemented; acceptance tracked separately
 
-## M4 — Artificial satellite tracking
+- [x] Opt-in validated targeted OMM, bounded local SGP4 and batched Points; default OFF stops fetch/propagation/draw work.
+- [x] Tested TEME→PEF→EQJ approximation, with Vallado/satellite.js reference cases; approximate prediction labels remain mandatory.
+- [x] ISS/Tiangong (when in catalog)/GPS selection, source epochs/age/altitude, recent/future predicted arcs, stale warnings and out-of-window refusal.
+- [x] Client/shared Worker persisted ≥2-hour per-dataset refresh, bounded cache, cancellation/timeouts, backoff/Retry-After and source-policy halt.
+- [~] Real GP route is deployed, but first source requests returned503; source acquisition remains unavailable with persisted cooldown. Browser default-OFF and honest unavailable states passed; controlled TEST FIXTURE scenes exercise prediction/rendering separately. Native tracking/performance acceptance requires a functioning host. See VALIDATION.md.
 
-- [ ] Satellite switch OFF = no CelesTrak requests and no SGP4 work.
-- [ ] OMM JSON read/validation, `satellite.js` SGP4 and TEME↔Earth/inertial conversion tests.
-- [ ] ISS, Tiangong (if in data), GPS groups; orbital trails, selectable NORAD information; OMM age/status.
-- [ ] Separate source refresh scheduler with 2h minimum + on-disk cache, stale/failure policy.
+## M5 — Density and performance: planned
 
-**Exit:** Epoch/current position comparisons against external reference and anti-overfetch tests.
+- [ ] Optional Starlink filtering/subsampling, instancing and LOD.
+- [ ] Extended interaction/accessibility polish and long-running iGPU/dGPU profiles.
+- [ ] Native host performance/quality tuning after the M0 gate is resolved.
 
-## M5 — Performance & customization
+## M6 — Wallpaper Engine release: planned
 
-- [ ] Optional filtered Starlink; InstancedMesh/Points + LOD and max satellite counts.
-- [ ] Wallpaper Engine editable user properties; host FPS cap, pause/restart and quality presets.
-- [ ] Time/profile performance tests on typical iGPU and dGPU.
+- [ ] Verified editor import and all user properties in the real host.
+- [ ] Offline/FPS/pause/Windows/resolution matrix and two-hour soak completed.
+- [ ] Final source-code license decision, notices, release preview and standalone bundle audit.
+- [ ] Owner explicitly approves Workshop publication.
 
-**Exit:** Target 30 FPS under medium settings with explicit test hardware and no unreasonable background usage.
-
-## M6 — Workshop release
-
-- [ ] Local static assets only, license/third-party notices, screenshot/preview video.
-- [ ] Tested build imported via `dist/index.html` in Wallpaper Engine editor.
-- [ ] Verified offline, FPS, settings, Win 10/11, 1080p/1440p/4K and ultrawide.
-- [ ] Workshop publishing and post-publish update workflow.
-
-**Exit:** Owner explicitly approves Workshop publication; no automatic external uploads by agents.
+No Workshop publication or fabricated `project.json` is part of the current implementation.

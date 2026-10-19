@@ -2,6 +2,8 @@
 
 > This file is the authoritative execution brief for coding agents working in this repository. Read it before changing code. The product is a **Wallpaper Engine Web Wallpaper**, not a standalone Electron application or a generic astronomy website.
 
+**Implementation status (2026-10-20):** M0–M3 are implemented; M4 opt-in OMM/SGP4, frame conversion, bounded rendering and shared GP cache are implemented. The GP route is deployed, but first live source operations failed with503 and persisted cooldowns; current catalog acquisition remains unverified. Earth uses a calibrated offline attitude model, approximating UT1 with UTC and omitting polar motion; satellite positions remain labeled approximate predictions. Native acceptance remains partial after confirmed normal restarts and Steam file verification: production/plain HTML previews failed and the Web helper misread IPC arguments as Chromium URLs. Do not claim native editor import, properties, FPS/pause or offline validation. See `docs/VALIDATION.md`, `docs/EARTH_ORIENTATION.md`, `docs/SATELLITES.md` and `docs/ROADMAP.md`.
+
 ## 0. Mission and guardrails
 
 Build a polished, low-overhead, offline-capable **3D solar-system and Earth-orbit wallpaper** for Wallpaper Engine. The core is **TypeScript + Three.js + WebGL** (Vite for development/build). The visual experience must include a glowing Sun, textured spherical planets, orbital paths, real depth, rotating/zoomable camera, and an optional Earth-focused view showing actual tracked artificial satellites.
@@ -69,7 +71,7 @@ src/
   render/              # Three.js scene, cameras, meshes, lights, LOD and post-FX
   settings/            # Wallpaper Engine property bridge, defaults and UI
 public/textures/       # local assets + per-file attribution
-workers/horizons/      # optional constrained raw Horizons proxy; not imported by wallpaper
+workers/horizons/      # optional constrained raw + normalized Horizons adapter; separately deployed
 scripts/                # publishing/packaging helpers
 docs/                   # architecture, roadmap, provider policies, Wallpaper Engine workflow
 tests/                  # deterministic ephemeris/SGP4/property tests
@@ -79,7 +81,9 @@ Allowed direction: `app` composes `render`, `astronomy`, `satellites`, `sync`, `
 
 Provider interfaces return **normalized data** with `source`, `retrievedAt`, `validFrom`, `validUntil`, `epoch`, `referenceFrame`, `origin`, `units`, and `quality`. Persist cache with schema version; reject incompatible or corrupt cache. Keep the last known good value on network failure, with TTL, capped exponential backoff, jitter, and no retry loops.
 
-The optional `workers/horizons` backend exposes raw Horizons JSON through `/api/horizons.api`, not the normalized provider interface above. Its scoped backend ADR, deployment status and policy are in `docs/HORIZONS_PROXY.md`. Do not configure this raw endpoint as `VITE_EPHEMERIS_BASE_URL`; the `/api/ephemeris` adapter remains a separate M2 task.
+The optional `workers/horizons` backend implements both raw `/api/horizons.api` and normalized nine-body `/api/ephemeris?at=<UTC ISO>`. Production `.env.production` configures the public service base `https://horizons.ananwanan.cc`; never configure the raw route as that base. The adapter preserves remote ICRF and `quality: comparison`, while local EQJ snapshots drive rendering. Its ADR, deployed version, parser and cache policy are in `docs/HORIZONS_PROXY.md`.
+
+Solar display scales are artistic: radial distance `26 * ln(1 + distanceAU)`, independent exaggerated sphere radii/minimum visible pixels and a 70x geocentric Moon offset. Paths use the same transform. Earth focus instead shares `3/6371` scene units per km among Earth, Moon and satellites, without Solar compression. Earth's pole/spin/texture mapping use GAST plus EQD→EQJ precession/nutation in both views; other body poles and lunar surface orientation remain illustrative.
 
 ## 4. Time, units and coordinate frames — critical
 
@@ -172,11 +176,11 @@ The host sends **partial property change objects**; never reset other settings o
 
 ## 10. Development roadmap — commit-sized milestones
 
-- **M0 Bootstrap (now):** docs, scaffold, Vite/WebGL demo, local planet ephemeris, deterministic time controller, host bridge. Accept when offline Sun+8 planets and camera work; README labels outstanding parts.
-- **M1 Solar visual polish:** planet textures, sunlight, glow, orbital curves, Moon, Saturn ring, label collision, camera presets, 21:9/4K layout and 30fps cap.
-- **M2 Correct time & ephemerides:** UTC timeline, time scale, reset/pause, JPL adapter, schema normalization, current snapshot on boot, 1/6/24h scheduler, browser cache, offline fallback, golden tests.
-- **M3 Earth focus:** separate scene units, correct Earth body orientation, real texture assets & attribution, camera transition, Earth/Moon orbit and terrain-neutral Earth display.
-- **M4 Satellite tracking:** opt-in switch, targeted CelesTrak OMM, local SGP4, TEME frame conversion tests, ISS/Tiangong/GPS selection, trails, cache ≥2h, stale-data messaging.
+- **M0 Bootstrap — implemented, native acceptance partial:** Vite/WebGL scene, local ephemeris, deterministic clock and early host bridge. Browser success does not close the native import/FPS/pause gate.
+- **M1 Solar visual polish — implemented:** local licensed textures, Sun glow/corona, sampled inclined paths, Moon, Saturn ring, collision-aware labels, smooth presets and quality budgets. Browser evidence is separate from native/long-duration performance.
+- **M2 Correct time & ephemerides — implemented:** UTC timeline/rate/jump/reset/pause, normalized Horizons adapter, bounded hourly Hermite comparison, current real-UTC startup operation, 1/6/24h scheduling, browser cache/backoff/fallback and captured-reference tests. Remote state is a comparison, not the rendered trajectory.
+- **M3 Earth focus — implemented:** calibrated offline attitude and texture mapping, independent km scale, physical Earth/Moon placement/orbit, safe close-up and Earth–Moon camera; no optional cloud/night maps added.
+- **M4 Satellite tracking — implemented; acceptance tracked separately:** opt-in targeted CelesTrak OMM, local SGP4, tested TEME→PEF→EQJ approximation, ISS/Tiangong/GPS selection, predicted arcs, shared/client cache ≥2h, stale/refusal policy. No precision navigation claim; see validation for actual provider/browser/native coverage.
 - **M5 Density and UX:** optional Starlink subsampling, InstancedMesh, LOD, filters, satellite selection, quality modes, artist-friendly controls.
 - **M6 Wallpaper Engine release:** import `dist/index.html`, set editor properties, test host FPS/pause/offline/4K, verify asset licenses, Steam Workshop preview/description/release checklist.
 

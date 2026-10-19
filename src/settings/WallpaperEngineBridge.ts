@@ -1,30 +1,58 @@
-import { WallpaperSettings } from './Settings';
+import { normalizeSettingChanges, ownProperty, USER_PROPERTY_KEYS, type WallpaperSettings } from './Settings';
 
-type HostProperty = { value: unknown };
-type HostProperties = Record<string, HostProperty | undefined>;
-type HostListener = {
-  applyUserProperties?: (props: HostProperties) => void;
-  applyGeneralProperties?: (props: HostProperties) => void;
-  setPaused?: (paused: boolean) => void;
+export interface WallpaperHostListener {
+  applyUserProperties?: (props: unknown) => void;
+  applyGeneralProperties?: (props: unknown) => void;
+  setPaused?: (paused: unknown) => void;
+}
+
+export interface WallpaperHost {
+  wallpaperPropertyListener?: WallpaperHostListener;
 };
 
 declare global {
-  interface Window { wallpaperPropertyListener?: HostListener; }
+  interface Window extends WallpaperHost {}
 }
 
-/** Register at application entry before scene creation to receive initial host settings. */
-export function registerWallpaperBridge(onChange: (changes: Partial<WallpaperSettings>) => void): void {
-  window.wallpaperPropertyListener = {
+/**
+ * Register synchronously at entry, before scene/UI creation, so initial host delivery is received.
+ * User properties wrap values; applyGeneralProperties.fps is a plain number.
+ * https://docs.wallpaperengine.io/en/web/api/propertylistener.html
+ * https://docs.wallpaperengine.io/en/web/performance/fps.html
+ */
+export function registerWallpaperBridge(
+  onChange: (changes: Partial<WallpaperSettings>) => void,
+  host: WallpaperHost = window,
+): () => void {
+  const previous = host.wallpaperPropertyListener;
+  const hadOwnListener = Object.hasOwn(host, 'wallpaperPropertyListener');
+  let disposed = false;
+  const emit = (changes: unknown): void => {
+    if (disposed) return;
+    const patch = normalizeSettingChanges(changes);
+    if (Object.keys(patch).length > 0) onChange(patch);
+  };
+  const listener: WallpaperHostListener = {
+    ...previous,
     applyUserProperties(props) {
       const changed: Record<string, unknown> = {};
-      for (const key of ['viewMode', 'showSatellites', 'satelliteGroup', 'syncInterval', 'timeScale', 'showOrbits', 'showLabels', 'enableMouse', 'quality']) {
-        if (props[key] !== undefined) changed[key] = props[key]?.value;
+      for (const key of USER_PROPERTY_KEYS) {
+        const value = ownProperty(ownProperty(props, key), 'value');
+        if (value !== undefined) changed[key] = value;
       }
-      onChange(changed as Partial<WallpaperSettings>);
+      emit(changed);
     },
     applyGeneralProperties(props) {
-      if (props.fps !== undefined) onChange({ fps: Number(props.fps.value) });
+      emit({ fps: ownProperty(props, 'fps') });
     },
-    setPaused(paused) { onChange({ paused }); },
+    setPaused(paused) { emit({ paused }); },
+  };
+  host.wallpaperPropertyListener = listener;
+  return () => {
+    if (disposed) return;
+    disposed = true;
+    if (host.wallpaperPropertyListener !== listener) return;
+    if (hadOwnListener) host.wallpaperPropertyListener = previous;
+    else delete host.wallpaperPropertyListener;
   };
 }

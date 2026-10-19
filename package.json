@@ -13,9 +13,11 @@
   },
   "dependencies": {
     "astronomy-engine": "2.1.19",
+    "satellite.js": "7.1.0",
     "three": "0.186.1"
   },
   "devDependencies": {
+    "@types/node": "^24.19.2",
     "@types/three": "^0.186.0",
     "typescript": "^5.9.3",
     "vite": "^8.3.4",
