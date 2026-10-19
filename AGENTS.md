@@ -147,6 +147,8 @@ The host sends **partial property change objects**; never reset other settings o
 
 ## 9. Quality bar and testing
 
+> **Temporary CI pause (2026-10-19):** Automatic GitHub Actions CI has been intentionally disabled by removing `.github/workflows/ci.yml`. The previous workflow is archived at `docs/ci-workflow.yml.disabled` for later restoration; it must not be re-enabled without explicit repository-owner authorization. See `docs/CI.md`. During the pause, run `npm run typecheck`, `npm test` and `npm run build` locally before marking work verified, and report checks as unverified when they cannot be run.
+
 ### Automated
 
 - `npm run typecheck`, `npm run test`, `npm run build` pass on clean install.
@@ -176,7 +178,7 @@ The host sends **partial property change objects**; never reset other settings o
 - **M5 Density and UX:** optional Starlink subsampling, InstancedMesh, LOD, filters, satellite selection, quality modes, artist-friendly controls.
 - **M6 Wallpaper Engine release:** import `dist/index.html`, set editor properties, test host FPS/pause/offline/4K, verify asset licenses, Steam Workshop preview/description/release checklist.
 
-Each milestone ends with: passing typecheck/test/build; updated docs; no fake API calls or artificial “real-time” labels; one runnable demo screenshot/video where meaningful. Create issues with acceptance criteria, not a giant all-features pull request.
+Each milestone ends with: locally verified typecheck/test/build (automatic CI is temporarily paused); updated docs; no fake API calls or artificial “real-time” labels; one runnable demo screenshot/video where meaningful. Create issues with acceptance criteria, not a giant all-features pull request.
 
 ## 11. Workflow for coding agents
 
@@ -185,7 +187,7 @@ Each milestone ends with: passing typecheck/test/build; updated docs; no fake AP
 3. Prefer architecture-preserving additions; ask for design review before changing the core coordinate/time model.
 4. For provider changes, inspect the **current** official documentation and usage policy. Cite authoritative API references in docs. Record rate limits, data provenance and parser assumptions.
 5. Fail gracefully with diagnostics; protect remote endpoints with abort/timeout; no unbounded retries or silent exceptions.
-6. Run typecheck, tests and production build before completion; if dependencies/network prevent running them, disclose explicitly.
+6. Run typecheck, tests and production build locally before completion while CI is paused; if dependencies/network prevent running them, disclose explicitly. Do not restore GitHub Actions workflows unless the owner explicitly requests it.
 7. Never publish Workshop content, create a paid listing, upload copyrighted images, or change repo license without explicit owner authorization.
 8. Keep `AGENTS.md` and `docs/ARCHITECTURE.md` consistent with reality. `docs/ROADMAP.md` must distinguish **planned**, **partial** and **verified**.
 
