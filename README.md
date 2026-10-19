@@ -43,7 +43,7 @@ The local planet positions come from Astronomy Engine (heliocentric EQJ/J2000 ve
 
 ## Data contracts & caveats
 
-- NASA Horizons: planned optional current snapshot/ephemeris sync. **No production ephemeris endpoint is deployed by this repository.** `VITE_EPHEMERIS_BASE_URL` is an optional future shared-cache provider. The local preview works without it. The sync adapter may query the configured service only; it does not silently make per-frame NASA requests.
+- NASA Horizons: optional raw-response Cloudflare proxy in `workers/horizons`; see [setup, API contract and deployment status](docs/HORIZONS_PROXY.md). It is separate from the planned normalized `/api/ephemeris` provider. **Do not set `VITE_EPHEMERIS_BASE_URL` to this raw proxy:** the current wallpaper adapter expects a different schema. The local preview works without either service.
 - Artificial satellites: satellite.js/SGP4 is planned and must not be represented as fully implemented in this M0 preview. See `docs/ROADMAP.md`.
 - CelesTrak rates: GP dataset updates roughly every two hours; large dataset polling too frequently can be blocked. See official usage policy.
 - All assets must be local in the Workshop bundle, documented in `public/textures/ATTRIBUTION.md`.
@@ -54,6 +54,7 @@ The local planet positions come from Astronomy Engine (heliocentric EQJ/J2000 ve
 - [Architecture](docs/ARCHITECTURE.md)
 - [Development roadmap](docs/ROADMAP.md)
 - [Data providers and refresh](docs/DATA_SOURCES.md)
+- [Horizons Cloudflare proxy](docs/HORIZONS_PROXY.md)
 - [Wallpaper Engine integration](docs/WALLPAPER_ENGINE.md)
 - [CI status, manual checks and restoration](docs/CI.md)
 

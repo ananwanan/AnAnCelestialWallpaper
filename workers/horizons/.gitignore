@@ -1,0 +1,6 @@
+node_modules/
+node_modules.pnpm-temp/
+.wrangler/
+build/
+.dev.vars*
+.env*

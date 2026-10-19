@@ -69,7 +69,7 @@ src/
   render/              # Three.js scene, cameras, meshes, lights, LOD and post-FX
   settings/            # Wallpaper Engine property bridge, defaults and UI
 public/textures/       # local assets + per-file attribution
-workers/ (future)      # optional shared-cache proxy; not imported by wallpaper
+workers/horizons/      # optional constrained raw Horizons proxy; not imported by wallpaper
 scripts/                # publishing/packaging helpers
 docs/                   # architecture, roadmap, provider policies, Wallpaper Engine workflow
 tests/                  # deterministic ephemeris/SGP4/property tests
@@ -78,6 +78,8 @@ tests/                  # deterministic ephemeris/SGP4/property tests
 Allowed direction: `app` composes `render`, `astronomy`, `satellites`, `sync`, `settings`. `render` consumes normalized immutable position snapshots and must not fetch URLs or parse raw API responses. `astronomy` must not depend on Three.js/WebGL. `sync` must not depend on renderer. `settings` must own settings validation and host bridge only.
 
 Provider interfaces return **normalized data** with `source`, `retrievedAt`, `validFrom`, `validUntil`, `epoch`, `referenceFrame`, `origin`, `units`, and `quality`. Persist cache with schema version; reject incompatible or corrupt cache. Keep the last known good value on network failure, with TTL, capped exponential backoff, jitter, and no retry loops.
+
+The optional `workers/horizons` backend exposes raw Horizons JSON through `/api/horizons.api`, not the normalized provider interface above. Its scoped backend ADR, deployment status and policy are in `docs/HORIZONS_PROXY.md`. Do not configure this raw endpoint as `VITE_EPHEMERIS_BASE_URL`; the `/api/ephemeris` adapter remains a separate M2 task.
 
 ## 4. Time, units and coordinate frames — critical
 

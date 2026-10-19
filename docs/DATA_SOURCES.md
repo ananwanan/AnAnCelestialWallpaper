@@ -11,6 +11,8 @@
 - Returned `format=json` contains a text `result` field; parse cautiously, check API `signature.version` and `$$SOE`/`$$EOE`; `COMMAND=399` Earth, `499` Mars; body IDs must be explicit.
 - Solar sync: attempt current-time request on startup **only when an endpoint is configured**. Re-sync every 1/6/24h. Prefer shared cached batch service for public Workshop distribution, not every installed copy downloading full ephemeris directly.
 - Shared cache should return ephemeris samples and validity windows or a documented comparison state. A single 6D vector is not a license to linearly extrapolate orbital state for days.
+- Optional constrained raw-response proxy: [`workers/horizons`](../workers/horizons), documented in [HORIZONS_PROXY.md](HORIZONS_PROXY.md). It does not implement the wallpaper's normalized `/api/ephemeris` contract.
+- [SSD API fair-use policy](https://ssd-api.jpl.nasa.gov/doc/) checked 2026-10-19: use only necessary requests, reuse cached results, serialize source access, back off after errors, and identify the application/version/contact in `User-Agent`. JPL disallows direct website embedding under its CORS policy; the Worker retrieves server-side and applies its own configured origin policy. This does not waive upstream terms or guarantee availability.
 
 ## CelesTrak OMM GP / satellites
 

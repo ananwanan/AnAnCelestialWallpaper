@@ -41,6 +41,10 @@ Ephemeris Sync (optional API)      +-- Astronomy Engine -> heliocentric EQJ/AU
 
 ## Surface API contracts (target)
 
+The optional `workers/horizons` service implements a constrained **raw Horizons** endpoint, `GET /api/horizons.api`. It fixes the upstream, coordinates source requests through one Durable Object and returns the upstream JSON envelope with text in `result`. It is deployed separately and is not imported into the static wallpaper. See [proxy contract, deployment status and ADR](HORIZONS_PROXY.md).
+
+The normalized routes below remain **targets**, not routes implemented by that proxy. In particular, `VITE_EPHEMERIS_BASE_URL` must remain unset until a compatible `/api/ephemeris` service exists. Raw Horizons JSON cannot pass the current wallpaper snapshot contract or enable a truthful synchronization status.
+
 `GET {base}/api/ephemeris?at=<UTC ISO>`
 
 ```json

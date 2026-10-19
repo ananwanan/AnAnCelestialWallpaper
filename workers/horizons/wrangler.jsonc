@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "anan-celestial-horizons",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-19",
+  "workers_dev": true,
+  "preview_urls": false,
+  "routes": [
+    { "pattern": "horizons.ananwanan.cc", "custom_domain": true }
+  ],
+  "vars": {
+    "ALLOWED_ORIGINS": "null,http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:4173,http://localhost:4173",
+    "UPSTREAM_USER_AGENT": "AnAnCelestialWallpaper/0.1.0 (+https://github.com/ananwanan/AnAnCelestialWallpaper)"
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "HORIZONS_GATE", "class_name": "HorizonsGate" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["HorizonsGate"] }],
+  "observability": { "enabled": false }
+}

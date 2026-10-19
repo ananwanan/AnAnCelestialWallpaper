@@ -90,7 +90,7 @@ export class SolarScene {
 
   resetCamera(): void {
     const earth = this.settings.viewMode === 'earth';
-    this.camera.position.set(...(earth ? [9, 7, 14] as const : [0, 360, 980] as const));
+    this.camera.position.set(earth ? 9 : 0, earth ? 7 : 360, earth ? 14 : 980);
     this.controls.target.set(0, 0, 0);
     this.controls.minDistance = earth ? 4.2 : 4;
     this.controls.maxDistance = earth ? 100 : 2500;

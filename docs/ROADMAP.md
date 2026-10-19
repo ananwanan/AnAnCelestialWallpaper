@@ -11,7 +11,7 @@ Status key: `[x]` implemented in initial scaffolding, `[~]` partial implementati
 - [x] Minimal Earth-focused scene and browser controls (not final quality).
 - [x] AGENTS.md, architecture, data policy, integration notes.
 - [x] Automatic CI intentionally paused; previous workflow retained in `docs/ci-workflow.yml.disabled` for later restoration.
-- [~] Manual/local test and build verification (requires npm dependencies; no verified clean build yet).
+- [x] Local typecheck, tests and production build verified on 2026-10-19 in the existing dependency checkout; clean-install and Wallpaper Engine acceptance remain separate.
 - [ ] Verified Wallpaper Engine import and user properties in actual application.
 
 **Exit:** Clean `npm install`, local typecheck/test/build all succeed (CI paused); offline scene is visible in a browser and Wallpaper Engine.
@@ -30,7 +30,7 @@ Status key: `[x]` implemented in initial scaffolding, `[~]` partial implementati
 - [ ] NASA Horizons adapter with schema/units/frame guard and current-time startup snapshot.
 - [ ] Valid interpolation of time-window position/velocity samples, or documented local evaluation with remote validation.
 - [ ] 1/6/24h refresh scheduler, offline cache, exponential-backoff and source status badge.
-- [ ] Hosted and rate-limited Cloudflare Worker (optional but recommended before public release).
+- [x] Optional constrained raw Horizons Cloudflare Worker in `workers/horizons`, deployed and live verified on 2026-10-19 through primary custom domain `horizons.ananwanan.cc` and the `workers.dev` fallback. HTTPS/cache/CORS/rejection checks passed; URLs and evidence are in [HORIZONS_PROXY.md](HORIZONS_PROXY.md). This does not complete normalized multi-body synchronization.
 
 **Exit:** Current time and time-scaled trajectory match known reference vectors within documented tolerance, even after 24h offline.
 
