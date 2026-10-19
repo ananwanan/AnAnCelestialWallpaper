@@ -2,16 +2,19 @@
 
 Status key: `[x]` implemented in initial scaffolding, `[~]` partial implementation, `[ ]` planned/unverified.
 
+**CI policy (2026-10-19):** Automatic GitHub Actions CI is **temporarily disabled**; active `.github/workflows/ci.yml` was removed and archived at `docs/ci-workflow.yml.disabled`. Validation remains a manual/local requirement (`npm run typecheck`, `npm test`, `npm run build`). Do not enable CI without owner approval. See [CI status and reactivation](CI.md).
+
 ## M0 — Bootstrap / offline prototype
 
 - [x] Vite/TypeScript/Three.js skeleton and relative production assets.
 - [x] Basic offline Sun and eight planets, astronomy-engine heliocentric positions, orbitable camera.
 - [x] Minimal Earth-focused scene and browser controls (not final quality).
 - [x] AGENTS.md, architecture, data policy, integration notes.
-- [~] Test and build verification (requires npm dependencies, which are not installed in the supplied archive).
+- [x] Automatic CI intentionally paused; previous workflow retained in `docs/ci-workflow.yml.disabled` for later restoration.
+- [~] Manual/local test and build verification (requires npm dependencies; no verified clean build yet).
 - [ ] Verified Wallpaper Engine import and user properties in actual application.
 
-**Exit:** Clean `npm install`, typecheck/test/build all succeed; offline scene is visible in a browser and Wallpaper Engine.
+**Exit:** Clean `npm install`, local typecheck/test/build all succeed (CI paused); offline scene is visible in a browser and Wallpaper Engine.
 
 ## M1 — Solar visual quality
 
