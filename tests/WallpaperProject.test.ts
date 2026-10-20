@@ -37,8 +37,13 @@ describe('existing Wallpaper Engine editor-project migration', () => {
     expect(migrated.general.properties.schemecolor).toEqual(original.general.properties.schemecolor);
     expect(migrated.general.properties.quality.value).toBe('high');
     expect(migrated.general.properties.showDesktopSettings.value).toBe(true);
+    expect(migrated.general.properties.showStatusBar.value).toBe(false);
     expect(migrated.general.properties.showSatellites.value).toBe(false);
     expect(JSON.parse(await readFile(path.join(JSON.parse(output).backupDirectory, 'project.json'), 'utf8'))).toEqual(original);
+    migrated.general.properties.showStatusBar.value = true;
+    await writeFile(projectFile, JSON.stringify(migrated));
+    execFileSync(process.execPath, ['scripts/update-wallpaper-project.mjs', '--project', projectFile], { encoding: 'utf8' });
+    expect(JSON.parse(await readFile(projectFile, 'utf8')).general.properties.showStatusBar.value).toBe(true);
   });
 
   it('does not create a substitute project when no editor project exists', () => {

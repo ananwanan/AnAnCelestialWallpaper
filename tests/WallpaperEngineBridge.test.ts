@@ -20,12 +20,14 @@ describe('Wallpaper Engine host bridge', () => {
     let settings = { ...DEFAULT_SETTINGS };
     registerWallpaperBridge(patch => { settings = sanitizeSettings(settings, patch); }, host);
     host.wallpaperPropertyListener!.applyUserProperties!({
-      showDesktopSettings: { value: true }, cameraPreset: { value: 'earthMoon' },
+      showDesktopSettings: { value: true }, showStatusBar: { value: true }, cameraPreset: { value: 'earthMoon' },
       satelliteSelection: { value: '48274' }, simulationUtc: { value: '2026-10-20T00:00:00Z' },
     });
     host.wallpaperPropertyListener!.applyUserProperties!({ showDesktopSettings: { value: false } });
-    expect(settings).toMatchObject({ showDesktopSettings: false, cameraPreset: 'earthMoon', satelliteSelection: 48274,
+    expect(settings).toMatchObject({ showDesktopSettings: false, showStatusBar: true, cameraPreset: 'earthMoon', satelliteSelection: 48274,
       simulationUtc: '2026-10-20T00:00:00.000Z', showSatellites: false, fps: 30 });
+    host.wallpaperPropertyListener!.applyUserProperties!({ showStatusBar: { value: false } });
+    expect(settings).toMatchObject({ showDesktopSettings: false, showStatusBar: false, cameraPreset: 'earthMoon', satelliteSelection: 48274 });
   });
   it('installs synchronously and accepts initial properties before a scene exists', () => {
     const host: WallpaperHost = {};

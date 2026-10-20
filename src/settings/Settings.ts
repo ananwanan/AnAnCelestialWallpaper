@@ -6,6 +6,7 @@ export interface WallpaperSettings {
   viewMode: ViewMode;
   cameraPreset: CameraSetting;
   showDesktopSettings: boolean;
+  showStatusBar: boolean;
   showSatellites: boolean;
   satelliteGroup: 'stations' | 'gps' | 'starlink';
   satelliteSelection: number;
@@ -21,7 +22,7 @@ export interface WallpaperSettings {
 }
 
 export const DEFAULT_SETTINGS: WallpaperSettings = {
-  viewMode: 'solar', cameraPreset: 'default', showDesktopSettings: false,
+  viewMode: 'solar', cameraPreset: 'default', showDesktopSettings: false, showStatusBar: false,
   showSatellites: false, satelliteGroup: 'stations', satelliteSelection: 0,
   syncInterval: 6, timeScale: 1, simulationUtc: '', showOrbits: true, showLabels: true,
   enableMouse: true, quality: 'medium', fps: 30, paused: false,
@@ -29,7 +30,7 @@ export const DEFAULT_SETTINGS: WallpaperSettings = {
 
 /** Only named hidden combo values are supported; editor option indices are not values. */
 export const USER_PROPERTY_KEYS = [
-  'viewMode', 'cameraPreset', 'showDesktopSettings', 'showSatellites', 'satelliteGroup', 'satelliteSelection', 'syncInterval', 'timeScale', 'simulationUtc',
+  'viewMode', 'cameraPreset', 'showDesktopSettings', 'showStatusBar', 'showSatellites', 'satelliteGroup', 'satelliteSelection', 'syncInterval', 'timeScale', 'simulationUtc',
   'showOrbits', 'showLabels', 'enableMouse', 'quality',
 ] as const satisfies readonly (keyof WallpaperSettings)[];
 
@@ -69,7 +70,7 @@ export function normalizeSettingChanges(changes: unknown): Partial<WallpaperSett
     const canonical = simulationUtc.length === 20 ? simulationUtc.replace('Z', '.000Z') : simulationUtc;
     if (Number.isFinite(at.getTime()) && at.getUTCFullYear() >= 1962 && at.getUTCFullYear() <= 2100 && at.toISOString() === canonical) patch.simulationUtc = canonical;
   }
-  for (const key of ['showDesktopSettings', 'showSatellites', 'showOrbits', 'showLabels', 'enableMouse', 'paused'] as const) {
+  for (const key of ['showDesktopSettings', 'showStatusBar', 'showSatellites', 'showOrbits', 'showLabels', 'enableMouse', 'paused'] as const) {
     const value = ownProperty(changes, key);
     if (typeof value === 'boolean') patch[key] = value;
   }

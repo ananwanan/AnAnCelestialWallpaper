@@ -7,6 +7,7 @@ describe('validated partial wallpaper settings', () => {
     expect(DEFAULT_SETTINGS.fps).toBe(30);
     expect(DEFAULT_SETTINGS.syncInterval).toBe(6);
     expect(DEFAULT_SETTINGS.showDesktopSettings).toBe(false);
+    expect(DEFAULT_SETTINGS.showStatusBar).toBe(false);
   });
 
   it('keeps native imports quiet before host delivery and preserves HTTP development controls', () => {
@@ -42,11 +43,11 @@ describe('validated partial wallpaper settings', () => {
   });
 
   it('preserves every unrelated setting across a sequence of partial updates', () => {
-    const initial = { ...DEFAULT_SETTINGS, viewMode: 'earth' as const, timeScale: 60, showLabels: false };
+    const initial = { ...DEFAULT_SETTINGS, viewMode: 'earth' as const, timeScale: 60, showLabels: false, showStatusBar: true };
     const first = sanitizeSettings(initial, { quality: 'high' });
     const second = sanitizeSettings(first, { showOrbits: false });
     expect(second).toEqual({ ...initial, quality: 'high', showOrbits: false });
-    expect(initial).toEqual({ ...DEFAULT_SETTINGS, viewMode: 'earth', timeScale: 60, showLabels: false });
+    expect(initial).toEqual({ ...DEFAULT_SETTINGS, viewMode: 'earth', timeScale: 60, showLabels: false, showStatusBar: true });
     expect(second.showSatellites).toBe(false);
   });
 
@@ -69,10 +70,10 @@ describe('validated partial wallpaper settings', () => {
 
   it('requires real booleans instead of truthy strings/numbers', () => {
     expect(sanitizeSettings(DEFAULT_SETTINGS, {
-      showSatellites: 'true', showOrbits: 0, showLabels: null, enableMouse: 1, paused: 'false',
+      showStatusBar: 'true', showSatellites: 'true', showOrbits: 0, showLabels: null, enableMouse: 1, paused: 'false',
     })).toEqual(DEFAULT_SETTINGS);
-    expect(normalizeSettingChanges({ showSatellites: false, showOrbits: false, showLabels: false, enableMouse: false, paused: false }))
-      .toEqual({ showSatellites: false, showOrbits: false, showLabels: false, enableMouse: false, paused: false });
+    expect(normalizeSettingChanges({ showStatusBar: false, showSatellites: false, showOrbits: false, showLabels: false, enableMouse: false, paused: false }))
+      .toEqual({ showStatusBar: false, showSatellites: false, showOrbits: false, showLabels: false, enableMouse: false, paused: false });
   });
 
   it('accepts finite time rates and positive FPS, clamps documented bounds and rejects NaN/infinities', () => {

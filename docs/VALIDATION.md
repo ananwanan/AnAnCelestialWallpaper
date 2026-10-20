@@ -2,6 +2,15 @@
 
 `Verified` means the stated check was executed. `Partial` means implementation or some evidence exists but the full acceptance route remains open. `Planned` means it was not exercised. Browser tests, deployed API checks and native Wallpaper Engine acceptance are separate.
 
+## Optional status bar — 2026-10-20, 22:47 Asia/Shanghai
+
+The upper-left identity overlay is removed. `showStatusBar` (default OFF, **显示时间与数据状态栏**) independently controls the lower-left UTC/rate/provenance footer through host properties and the optional desktop drawer.
+
+- Verified locally: `npm run typecheck`, all **341 tests in 25 files**, `npm run build` and `git diff --check`. Existing setting/bridge/project tests cover the new default, boolean validation, partial-update preservation and retained migrated choices. The existing >500 kB Vite advisory remains.
+- Verified in the production HTTP browser preview: footer absent on fresh load, checkbox OFF→ON→OFF, footer still visible after switching to Earth, and no upper-left identity overlay. The comparison request failed gracefully while local rendering continued; no artificial satellites were enabled. [OFF capture](../artifacts/status-bar-ui/production-status-off.png), [ON capture](../artifacts/status-bar-ui/production-status-on.png). This is browser evidence, not native host delivery.
+- The existing editor project was updated with the 14-property manifest and fresh `index-BNdxhtle.js` / `index-DAB4tbhp.css`, after backup to `artifacts/WallpaperEngine-project-backup-2026-10-20T14-45-55-841Z`. All 17 installed resources match the new build manifest; all prior property values were preserved and the new property is OFF. [Installed audit](../artifacts/status-bar-ui/installed-audit.json). Reloading and exercising this new property in native Wallpaper Engine remain unverified; earlier native checks below refer to their stated builds.
+- Refreshed local import ZIP: 17 files, 5,337,722 bytes, SHA-256 `84a12bd3dd7c28fe81193b3b1ea4ea4725d60feaad0974eebb73a2c65b55c445`. [Bundle](../artifacts/AnAnCelestialWallpaper-web.zip). No Worker deployment, deliberate GP source operation or CI change was part of this update.
+
 ## Host settings and GP investigation — 2026-10-20, latest continuation
 
 This section supersedes earlier black-screen-only statements. The owner clarified that their success concerned editor preview. The final `index-DUa_F1cm.js` / `index-DqRsUQp0.css` now independently renders, and scoped real desktop property/FPS/pause evidence exists. Full release acceptance remains separate.

@@ -11,6 +11,7 @@ Status: `[x]` implemented with stated evidence; `[~]` partial or acceptance stil
 - [x] Clean `npm ci` with zero reported vulnerabilities, local typecheck/test/build and production browser rendering.
 - [x] Actual editor import/preview observed on 2026-10-20, including the updated build with desktop controls hidden; real editor-generated metadata is preserved and backed up.
 - [x] Product properties appear in the editor and Wallpaper Engine's main properties panel; optional desktop settings switch defaults OFF.
+- [x] Upper-left identity overlay removed; independent `showStatusBar` switch defaults OFF for the lower-left UTC/rate/provenance footer. Local checks and production-browser OFF/ON/OFF plus view-switch preservation passed; the existing editor project was backed up and updated. Native delivery of the new property remains unverified; see VALIDATION.md.
 - [x] ASCII real-project migration fixed the observed damaged-path startup; final build independently renders. Native HTML button/listbox settings opened, expanded and selected High quality without the earlier select-related CEF crash.
 - [x] Scoped native delivery: desktop-controls and time-rate properties, desktop15 FPS admission (~14.3 measured), actual host pause/resume,11 textures and24 draw calls. See exact coverage in VALIDATION.md.
 - [~] Broader native acceptance: warm blocked-HTTP page test passed; OS-disconnected startup, desktop icon forwarding, fullscreen/display matrix and long-duration measurements remain open.

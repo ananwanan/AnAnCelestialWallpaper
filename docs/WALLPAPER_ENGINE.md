@@ -45,6 +45,7 @@ For another existing project affected by a directory-encoding problem, `scripts/
 | `viewMode` | combo | `solar`, `earth`; `solar` |
 | `cameraPreset` | combo | `default`, `inner`, `outer`, `earthMoon`; `default`. Inner/outer apply in Solar view; Earth–Moon applies in Earth view. Incompatible choices use that view's default. |
 | `showDesktopSettings` | bool | `false`; enables optional desktop navigation, settings drawer and simulation-pause button |
+| `showStatusBar` | bool | `false`; independently shows the lower-left UTC, rate and provenance footer; also available in the optional drawer |
 | `showSatellites` | bool | `false`; enabling lazily requests scoped GP, disabling aborts requests and clears propagation/drawing |
 | `satelliteGroup` | combo | `stations`, `gps`; `stations`. Starlink is not offered before its performance gate. |
 | `satelliteSelection` | textinput | `0` automatic; `25544` ISS, `48274` Tiangong; a GPS NORAD ID must belong to the GPS group. This selects within the loaded group and makes no extra catalog request. |
@@ -56,7 +57,7 @@ For another existing project affected by a directory-encoding problem, `scripts/
 | `enableMouse` | bool | `true` |
 | `quality` | combo | `low`, `medium`, `high`; `medium` |
 
-Properties live in Wallpaper Engine's Installed-wallpaper properties sidebar. On a local `file://` import the interactive desktop controls start hidden even before the first host callback. Changing `showDesktopSettings` to false closes any open drawer, removes the navigation/pause buttons from tab order, and disables wallpaper keyboard shortcuts so desktop typing does not change the scene. Read-only time, provenance, scientific-scale notes and enabled satellite details remain visible. Mouse orbit/zoom has its own independent `enableMouse` property; desktop-icon input forwarding remains a host behavior to verify.
+Properties live in Wallpaper Engine's Installed-wallpaper properties sidebar. On a local `file://` import the interactive desktop controls start hidden even before the first host callback. Changing `showDesktopSettings` to false closes any open drawer, removes the navigation/pause buttons from tab order, and disables wallpaper keyboard shortcuts so desktop typing does not change the scene. The upper-left identity overlay is removed; the lower-left time/rate/provenance footer is hidden by default and independently controlled by **显示时间与数据状态栏** (`showStatusBar`). Enabling it does not enable desktop controls. Scientific-scale notes and enabled satellite details retain their own visibility behavior. Mouse orbit/zoom has its own independent `enableMouse` property; desktop-icon input forwarding remains a host behavior to verify. The new status-bar property requires updating existing editor imports; prior native property evidence does not verify its delivery.
 
 The optional drawer uses HTML listboxes rather than opening native select popups. Click a choice or use Arrow Up/Down, Home/End and Enter/Space; Escape, Tab, outside clicks and drawer hiding dismiss the list. Dynamic satellite options and disabled/no-data state use the same validated settings/change path as host properties.
 

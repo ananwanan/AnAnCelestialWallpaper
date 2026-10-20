@@ -8,6 +8,7 @@
     "options": [{"label": "默认全景 / 地球特写", "value": "default"}, {"label": "太阳系 · 内行星", "value": "inner"}, {"label": "太阳系 · 外行星", "value": "outer"}, {"label": "地球 · 地月全景", "value": "earthMoon"}]
   },
   "showDesktopSettings": {"type": "bool", "text": "在桌面显示设置控件", "value": false, "order": 30},
+  "showStatusBar": {"type": "bool", "text": "显示时间与数据状态栏", "value": false, "order": 35},
   "showSatellites": {"type": "bool", "text": "显示预测卫星（默认关闭）", "value": false, "order": 40},
   "satelliteGroup": {
     "type": "combo", "text": "卫星数据组", "value": "stations", "order": 50,

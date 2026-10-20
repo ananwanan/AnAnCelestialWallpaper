@@ -13,7 +13,7 @@ Build a polished, low-overhead, offline-capable **3D solar-system and Earth-orbi
 * **Remote data is sparse:** At startup request a current ephemeris snapshot when a configured provider is available; recompute positions **locally** against simulation time during animation. Resync at configurable **1/6/24-hour** intervals. Satellite GP/OMM records must obey **at least 2 hours between refreshes per dataset** regardless of a 1-hour selection.
 * **Satellites are opt-in:** `showSatellites` defaults to `false`. Disabling it stops network fetches, background propagation and satellite draw calls; it does not affect the solar-system view.
 * **No secrets in the client:** No API keys, user tokens or writeable credentials in `src/`, public assets, Vite environment variables prefixed `VITE_`, or the Workshop bundle.
-* **No deceptive success:** Add visible but non-blocking data provenance labels: `Live/Sync`, `Local prediction`, `Cached`, `Demo`; distinguish requested API corrections from computed local trajectories. Never imply an API exists if not deployed.
+* **No deceptive success:** Provide non-blocking data provenance labels: `Live/Sync`, `Local prediction`, `Cached`, `Demo` in the optional status bar; distinguish requested API corrections from computed local trajectories. Never imply an API exists if not deployed.
 * **No unlicensed images:** Bundle only original, explicitly redistributable, or correctly licensed artwork. Track source URL, author and license for each texture in `public/textures/ATTRIBUTION.md`.
 
 ## 1. Product scope
@@ -134,6 +134,7 @@ Keys for Wallpaper Engine editor (must match exact names in the host project set
 | `viewMode` | combo | `solar` | `solar` / `earth` |
 | `cameraPreset` | combo | `default` | `default`, `inner`, `outer`, `earthMoon`; adapts to selected view |
 | `showDesktopSettings` | bool | `false` | Optional desktop navigation/settings/pause controls; hidden by default in local imports |
+| `showStatusBar` | bool | `false` | Independently show the lower-left UTC/rate/provenance footer; also available in the optional desktop drawer |
 | `showSatellites` | bool | `false` | Lazy-load/toggle satellite layer |
 | `satelliteGroup` | combo | `stations` | `stations`, `gps`, later `starlink` |
 | `satelliteSelection` | textinput | `0` | NORAD ID; 0 selects automatically; never invent a missing catalog entry |
@@ -145,7 +146,7 @@ Keys for Wallpaper Engine editor (must match exact names in the host project set
 | `enableMouse` | bool | `true` | Camera drag and wheel |
 | `quality` | combo | `medium` | `low`, `medium`, `high` |
 
-The host sends **partial property change objects**; never reset other settings on an unrelated property change. Keep a keyboard/UI fallback in normal HTTP browser development. In local imports, keep interactive desktop controls and shortcuts disabled unless `showDesktopSettings` is enabled; read-only time/provenance remains visible. Use `scripts/update-wallpaper-project.mjs` only with an existing editor-created project; preserve and back up its metadata.
+The host sends **partial property change objects**; never reset other settings on an unrelated property change. Keep a keyboard/UI fallback in normal HTTP browser development. In local imports, keep interactive desktop controls and shortcuts disabled unless `showDesktopSettings` is enabled. The lower-left time/rate/provenance footer follows the independent `showStatusBar` setting and defaults hidden; the upper-left identity overlay is removed. Use `scripts/update-wallpaper-project.mjs` only with an existing editor-created project; preserve and back up its metadata.
 
 ## 8. Asset and visual design
 
