@@ -4,6 +4,8 @@
 
 **Implementation status (2026-10-20):** M0–M3 and the M4 opt-in pipeline are implemented. The real editor project was backed up and moved to ASCII `projects/myprojects/anan-celestial-wallpaper`, resolving an observed path-encoding failure. Native independent rendering, host property delivery, optional desktop controls, a desktop 15 FPS cap sample (~14.3 FPS), and host pause/resume have evidence. Product native selects triggered a CEF crash; hidden select models now use HTML button/listbox presentation. Desktop controls default OFF. Native page-level blocked-HTTP warm-cache rendering passed; OS disconnection, desktop icons/fullscreen matrix and two-hour soak remain open. The deployed GP service preserved all gates; both the 02:14–02:15 and final 06:30–06:31 Asia/Shanghai cooldown-safe STATIONS/GPS checks timed out at 15s without HTTP headers. Real ISS/Tiangong/GPS acquisition remains unverified. Automatic follow-up has ended; investigate the Worker-to-CelesTrak network path before any further deliberate, gate-approved source operation. Earth uses UT1≈UTC without polar motion; satellites remain approximate predictions. See `docs/VALIDATION.md`, `docs/EARTH_ORIENTATION.md`, `docs/SATELLITES.md` and `docs/ROADMAP.md`.
 
+**Language contract (2026-10-21):** `language` defaults to `auto`, with explicit `en`, `zh-CN` and `zh-TW` choices. Sun/eight-planet/Moon labels and runtime interface text use one selected language. Automatic selection follows the browser/CEF-exposed language preferences and falls back to English when unavailable or unsupported; this does not guarantee access to the Windows display language. Verification of this change is tracked separately from earlier native evidence in `docs/VALIDATION.md`.
+
 ## 0. Mission and guardrails
 
 Build a polished, low-overhead, offline-capable **3D solar-system and Earth-orbit wallpaper** for Wallpaper Engine. The core is **TypeScript + Three.js + WebGL** (Vite for development/build). The visual experience must include a glowing Sun, textured spherical planets, orbital paths, real depth, rotating/zoomable camera, and an optional Earth-focused view showing actual tracked artificial satellites.
@@ -131,6 +133,7 @@ Keys for Wallpaper Engine editor (must match exact names in the host project set
 
 | Key | Type | Default | Behavior |
 |---|---|---|---|
+| `language` | combo | `auto` | `auto`, `en`, `zh-CN`, `zh-TW`; single-language celestial labels and runtime interface |
 | `viewMode` | combo | `solar` | `solar` / `earth` |
 | `cameraPreset` | combo | `default` | `default`, `inner`, `outer`, `earthMoon`; adapts to selected view |
 | `showDesktopSettings` | bool | `false` | Optional desktop navigation/settings/pause controls; hidden by default in local imports |
@@ -148,6 +151,8 @@ Keys for Wallpaper Engine editor (must match exact names in the host project set
 
 The host sends **partial property change objects**; never reset other settings on an unrelated property change. Keep a keyboard/UI fallback in normal HTTP browser development. In local imports, keep interactive desktop controls and shortcuts disabled unless `showDesktopSettings` is enabled. The lower-left time/rate/provenance footer follows the independent `showStatusBar` setting and defaults hidden; the upper-left identity overlay is removed. Use `scripts/update-wallpaper-project.mjs` only with an existing editor-created project; preserve and back up its metadata.
 
+For `language=auto`, inspect `navigator.languages` in preference order, then `navigator.language` when needed. Match English variants to `en`; Simplified Chinese (`zh`, `zh-Hans`, `zh-CN`, `zh-SG`) to `zh-CN`; Traditional Chinese (`zh-Hant`, `zh-TW`, `zh-HK`, `zh-MO`) to `zh-TW`. An explicit Chinese script takes precedence over region. Unsupported or missing preferences resolve to English. Update celestial labels, runtime controls, accessibility text and `document.documentElement.lang` in place on a language change; keep UTC, astronomical identifiers and raw catalog/source data unchanged. Wallpaper Engine's editor property captions/options are owned by its project metadata, not runtime translation.
+
 ## 8. Asset and visual design
 
 - Deep black/navy starfield, minimal HUD, calm slow motion, warm sun glow, restrained bloom; visual hierarchy must remain clear behind desktop icons.
@@ -164,6 +169,7 @@ The host sends **partial property change objects**; never reset other settings o
 
 - `npm run typecheck`, `npm run test`, `npm run build` pass on clean install.
 - Unit tests for: simulation clock re-anchoring and resume, position continuity, Sun-centered vs Earth-centered conversions, moon parent origin, UTC round-trip, OMM parser rejection, stale epoch policy, provider refresh cadence (including 1h selection capped to 2h for CelesTrak), cancellation when satellites are disabled, property partial update semantics.
+- Language tests for system-preference ordering, Simplified/Traditional matching, unavailable/unsupported fallback, single-language celestial names and language-only partial updates; browser checks for in-place labels, controls and accessibility language.
 - Known-epoch golden checks against authoritative JPL/Satellite.js reference vectors with documented tolerance.
 - No secret keys, surprise upstream calls or external runtime JS/CSS/textures in production output.
 

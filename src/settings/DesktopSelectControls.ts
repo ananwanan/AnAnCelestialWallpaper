@@ -16,7 +16,6 @@ interface SelectView {
   wrapper: HTMLSpanElement;
   trigger: HTMLButtonElement;
   list: HTMLDivElement;
-  label: string;
   signature: string;
   active: number;
   buttons: HTMLButtonElement[];
@@ -29,13 +28,12 @@ export class DesktopSelectControls {
   private readonly views: SelectView[] = [];
   private disposed = false;
 
-  constructor(root: HTMLElement) {
+  constructor(root: HTMLElement, private readonly emptyLabel: () => string = () => 'No data available') {
     for (const model of Array.from(root.querySelectorAll<HTMLSelectElement>('select'))) {
       model.hidden = true;
       model.tabIndex = -1;
       model.setAttribute('aria-hidden', 'true');
       const parent = model.parentElement!;
-      const label = Array.from(parent.childNodes).filter(node => node !== model).map(node => node.textContent).join('').trim();
       // A label must not forward caption clicks to the hidden native select.
       if (parent.tagName === 'LABEL') {
         const row = document.createElement('div'); row.className = parent.className;
@@ -49,9 +47,9 @@ export class DesktopSelectControls {
       trigger.setAttribute('aria-expanded', 'false'); trigger.setAttribute('aria-controls', `${model.id}-options`);
       const list = document.createElement('div');
       list.id = `${model.id}-options`; list.className = 'desktop-select-options'; list.hidden = true;
-      list.setAttribute('role', 'listbox'); list.setAttribute('aria-label', label);
+      list.setAttribute('role', 'listbox');
       wrapper.append(trigger, list); model.after(wrapper);
-      const view: SelectView = { model, wrapper, trigger, list, label, signature: '', active: -1, buttons: [], observer: new MutationObserver(() => this.refreshView(view)) };
+      const view: SelectView = { model, wrapper, trigger, list, signature: '', active: -1, buttons: [], observer: new MutationObserver(() => this.refreshView(view)) };
       this.views.push(view);
       view.observer.observe(model, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['disabled', 'label', 'value', 'selected'] });
       trigger.addEventListener('click', () => { if (list.hidden) this.open(view); else this.close(view); }, { signal: this.events.signal });
@@ -100,8 +98,12 @@ export class DesktopSelectControls {
       view.active = view.model.selectedIndex;
     }
     const selected = options[view.model.selectedIndex];
-    view.trigger.textContent = selected?.label ?? '暂无数据';
-    view.trigger.setAttribute('aria-label', `${view.label}：${selected?.label ?? '暂无数据'}`);
+    // Captions can change language without replacing the control or its open/selected state.
+    const label = Array.from(view.model.parentElement!.childNodes).filter(node => node !== view.model && node !== view.wrapper).map(node => node.textContent).join('').trim();
+    const selectedLabel = selected?.label ?? this.emptyLabel();
+    view.trigger.textContent = selectedLabel;
+    view.trigger.setAttribute('aria-label', `${label}: ${selectedLabel}`);
+    view.list.setAttribute('aria-label', label);
     view.trigger.disabled = view.model.disabled || view.buttons.every(button => button.disabled);
     for (let index = 0; index < view.buttons.length; index++) view.buttons[index]!.setAttribute('aria-selected', String(index === view.model.selectedIndex));
     if (view.trigger.disabled) this.close(view);

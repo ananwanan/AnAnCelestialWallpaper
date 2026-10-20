@@ -1,4 +1,8 @@
 {
+  "language": {
+    "type": "combo", "text": "Language / 语言", "value": "auto", "order": 5,
+    "options": [{"label": "System language / 系统语言", "value": "auto"}, {"label": "English", "value": "en"}, {"label": "简体中文", "value": "zh-CN"}, {"label": "繁體中文", "value": "zh-TW"}]
+  },
   "viewMode": {
     "type": "combo", "text": "视角", "value": "solar", "order": 10,
     "options": [{"label": "太阳系", "value": "solar"}, {"label": "地球与卫星", "value": "earth"}]

@@ -1,8 +1,10 @@
 export type ViewMode = 'solar' | 'earth';
 export type Quality = 'low' | 'medium' | 'high';
 export type CameraSetting = 'default' | 'inner' | 'outer' | 'earthMoon';
+export type LanguageSetting = 'auto' | 'en' | 'zh-CN' | 'zh-TW';
 
 export interface WallpaperSettings {
+  language: LanguageSetting;
   viewMode: ViewMode;
   cameraPreset: CameraSetting;
   showDesktopSettings: boolean;
@@ -22,6 +24,7 @@ export interface WallpaperSettings {
 }
 
 export const DEFAULT_SETTINGS: WallpaperSettings = {
+  language: 'auto',
   viewMode: 'solar', cameraPreset: 'default', showDesktopSettings: false, showStatusBar: false,
   showSatellites: false, satelliteGroup: 'stations', satelliteSelection: 0,
   syncInterval: 6, timeScale: 1, simulationUtc: '', showOrbits: true, showLabels: true,
@@ -30,6 +33,7 @@ export const DEFAULT_SETTINGS: WallpaperSettings = {
 
 /** Only named hidden combo values are supported; editor option indices are not values. */
 export const USER_PROPERTY_KEYS = [
+  'language',
   'viewMode', 'cameraPreset', 'showDesktopSettings', 'showStatusBar', 'showSatellites', 'satelliteGroup', 'satelliteSelection', 'syncInterval', 'timeScale', 'simulationUtc',
   'showOrbits', 'showLabels', 'enableMouse', 'quality',
 ] as const satisfies readonly (keyof WallpaperSettings)[];
@@ -48,6 +52,8 @@ export function ownProperty(value: unknown, key: string): unknown {
 /** Validate a partial change without introducing defaults for omitted or invalid values. */
 export function normalizeSettingChanges(changes: unknown): Partial<WallpaperSettings> {
   const patch: Partial<WallpaperSettings> = {};
+  const language = ownProperty(changes, 'language');
+  if (language === 'auto' || language === 'en' || language === 'zh-CN' || language === 'zh-TW') patch.language = language;
   const viewMode = ownProperty(changes, 'viewMode');
   if (viewMode === 'solar' || viewMode === 'earth') patch.viewMode = viewMode;
   const cameraPreset = ownProperty(changes, 'cameraPreset');

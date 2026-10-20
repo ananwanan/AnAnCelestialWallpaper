@@ -13,6 +13,8 @@ describe('existing Wallpaper Engine editor-project migration', () => {
     const normalized = normalizeSettingChanges(wrappedDefaults);
     for (const key of USER_PROPERTY_KEYS) expect(normalized[key]).toEqual(DEFAULT_SETTINGS[key]);
     expect(definitions.satelliteGroup.options.map(option => option.value)).toEqual(['stations', 'gps']);
+    expect(definitions.language).toMatchObject({ type: 'combo', value: 'auto', order: 5 });
+    expect(definitions.language.options.map(option => option.value)).toEqual(['auto', 'en', 'zh-CN', 'zh-TW']);
   });
 
   it('backs up an existing project and keeps editor metadata, unknown properties and prior valid choices', async () => {
@@ -39,11 +41,15 @@ describe('existing Wallpaper Engine editor-project migration', () => {
     expect(migrated.general.properties.showDesktopSettings.value).toBe(true);
     expect(migrated.general.properties.showStatusBar.value).toBe(false);
     expect(migrated.general.properties.showSatellites.value).toBe(false);
+    expect(migrated.general.properties.language.value).toBe('auto');
     expect(JSON.parse(await readFile(path.join(JSON.parse(output).backupDirectory, 'project.json'), 'utf8'))).toEqual(original);
     migrated.general.properties.showStatusBar.value = true;
+    migrated.general.properties.language.value = 'zh-TW';
     await writeFile(projectFile, JSON.stringify(migrated));
     execFileSync(process.execPath, ['scripts/update-wallpaper-project.mjs', '--project', projectFile], { encoding: 'utf8' });
-    expect(JSON.parse(await readFile(projectFile, 'utf8')).general.properties.showStatusBar.value).toBe(true);
+    const remigrated = JSON.parse(await readFile(projectFile, 'utf8'));
+    expect(remigrated.general.properties.showStatusBar.value).toBe(true);
+    expect(remigrated.general.properties.language.value).toBe('zh-TW');
   });
 
   it('does not create a substitute project when no editor project exists', () => {

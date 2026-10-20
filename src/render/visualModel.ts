@@ -6,15 +6,15 @@ import type { CartesianVector, EarthOrientation } from '../astronomy/earthOrient
 export const DISPLAY_SCALE = Object.freeze({ solarScale: 26, planetRadiusExaggeration: 1,
   moonDistanceExaggeration: 70, earthFocusKmToScene: 3 / 6371 });
 
-export const PLANET_VISUALS: Record<PlanetName, { radius: number; physicalRadiusKm: number; color: number; texture: string; tilt: number; rotationDays: number; chinese: string }> = {
-  Mercury: { radius: .47, physicalRadiusKm: 2439.7, color: 0xb6a89d, texture: '2k_mercury.jpg', tilt: .03, rotationDays: 58.646, chinese: '水星' },
-  Venus: { radius: .78, physicalRadiusKm: 6051.8, color: 0xe1c390, texture: '2k_venus_atmosphere.jpg', tilt: 177.4, rotationDays: -243.025, chinese: '金星' },
-  Earth: { radius: .84, physicalRadiusKm: 6371, color: 0x87b7da, texture: '2k_earth_daymap.jpg', tilt: 23.44, rotationDays: .99727, chinese: '地球' },
-  Mars: { radius: .61, physicalRadiusKm: 3389.5, color: 0xe29978, texture: '2k_mars.jpg', tilt: 25.19, rotationDays: 1.02596, chinese: '火星' },
-  Jupiter: { radius: 2.1, physicalRadiusKm: 69911, color: 0xd9c2ac, texture: '2k_jupiter.jpg', tilt: 3.13, rotationDays: .41354, chinese: '木星' },
-  Saturn: { radius: 1.75, physicalRadiusKm: 58232, color: 0xdac69c, texture: '2k_saturn.jpg', tilt: 26.73, rotationDays: .44401, chinese: '土星' },
-  Uranus: { radius: 1.25, physicalRadiusKm: 25362, color: 0xa6d6d9, texture: '2k_uranus.jpg', tilt: 97.77, rotationDays: -.71833, chinese: '天王星' },
-  Neptune: { radius: 1.2, physicalRadiusKm: 24622, color: 0x789bd8, texture: '2k_neptune.jpg', tilt: 28.32, rotationDays: .67125, chinese: '海王星' },
+export const PLANET_VISUALS: Record<PlanetName, { radius: number; physicalRadiusKm: number; color: number; texture: string; tilt: number; rotationDays: number }> = {
+  Mercury: { radius: .47, physicalRadiusKm: 2439.7, color: 0xb6a89d, texture: '2k_mercury.jpg', tilt: .03, rotationDays: 58.646 },
+  Venus: { radius: .78, physicalRadiusKm: 6051.8, color: 0xe1c390, texture: '2k_venus_atmosphere.jpg', tilt: 177.4, rotationDays: -243.025 },
+  Earth: { radius: .84, physicalRadiusKm: 6371, color: 0x87b7da, texture: '2k_earth_daymap.jpg', tilt: 23.44, rotationDays: .99727 },
+  Mars: { radius: .61, physicalRadiusKm: 3389.5, color: 0xe29978, texture: '2k_mars.jpg', tilt: 25.19, rotationDays: 1.02596 },
+  Jupiter: { radius: 2.1, physicalRadiusKm: 69911, color: 0xd9c2ac, texture: '2k_jupiter.jpg', tilt: 3.13, rotationDays: .41354 },
+  Saturn: { radius: 1.75, physicalRadiusKm: 58232, color: 0xdac69c, texture: '2k_saturn.jpg', tilt: 26.73, rotationDays: .44401 },
+  Uranus: { radius: 1.25, physicalRadiusKm: 25362, color: 0xa6d6d9, texture: '2k_uranus.jpg', tilt: 97.77, rotationDays: -.71833 },
+  Neptune: { radius: 1.2, physicalRadiusKm: 24622, color: 0x789bd8, texture: '2k_neptune.jpg', tilt: 28.32, rotationDays: .67125 },
 };
 
 export const QUALITY_PRESETS: Record<Quality, { dpr: number; segments: number; earthSegments: number; stars: number; corona: boolean }> = {

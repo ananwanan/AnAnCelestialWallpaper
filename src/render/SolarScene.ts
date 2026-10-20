@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { PLANET_NAMES, type PlanetName, type SolarSnapshot, type SolarTrajectories, type Vec3Au } from '../astronomy/planetEphemeris';
 import { AU_KM, MOON_RADIUS_KM, type EarthViewSnapshot } from '../astronomy/earthOrientation';
 import { resolveCameraPreset, type WallpaperSettings } from '../settings/Settings';
+import { bodyLabel, resolveLanguage, type Language } from '../i18n';
 import type { SatelliteSnapshot, SatelliteTrajectory } from '../satellites/types';
 import { SatelliteLayer } from './SatelliteLayer';
 import { DISPLAY_SCALE, PLANET_VISUALS, QUALITY_PRESETS, placeLabel, solarDisplayPosition, moonDisplayOffset, earthFocusPositionKm, earthSphereBasis, minimumCameraDistance, solarPresetAspectScale, cameraDistanceBounds, type LabelRect } from './visualModel';
@@ -46,6 +47,7 @@ export class SolarScene {
   private readonly moonLabel: HTMLElement;
   private readonly sunLabel: HTMLElement;
   private settings: WallpaperSettings;
+  private language: Language;
   private preset: CameraPreset = 'overview';
   private width = 1;
   private height = 1;
@@ -61,6 +63,7 @@ export class SolarScene {
 
   constructor(private readonly container: HTMLElement, settings: WallpaperSettings, trajectories?: SolarTrajectories) {
     this.settings = { ...settings };
+    this.language = resolveLanguage(settings.language);
     this.scene.background = new THREE.Color(0x03060e);
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'low-power' });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -102,7 +105,7 @@ export class SolarScene {
     })));
     this.corona.scale.setScalar(3.25);
     this.solarRoot.add(this.corona);
-    this.sunLabel = this.makeLabel('太阳 · SUN', '#e5c596');
+    this.sunLabel = this.makeLabel(bodyLabel('Sun', this.language), '#e5c596');
     for (const name of PLANET_NAMES) {
       const style = PLANET_VISUALS[name];
       const root = new THREE.Group();
@@ -112,13 +115,13 @@ export class SolarScene {
       root.scale.setScalar(style.radius * DISPLAY_SCALE.planetRadiusExaggeration);
       if (name === 'Saturn') root.add(this.createSaturnRings());
       this.solarRoot.add(root);
-      this.bodies.set(name, { root, surface, radius: style.radius, label: this.makeLabel(`${style.chinese} · ${name.toUpperCase()}`, `#${new THREE.Color(style.color).getHexString()}`) });
+      this.bodies.set(name, { root, surface, radius: style.radius, label: this.makeLabel(bodyLabel(name, this.language), `#${new THREE.Color(style.color).getHexString()}`) });
     }
     this.moon = new THREE.Mesh(sphere, this.trackMaterial(new THREE.MeshStandardMaterial({ map: this.loadTexture('2k_moon.jpg'), roughness: 1 })));
     this.moon.scale.setScalar(.25);
     this.moonRoot.add(this.moon);
     this.solarRoot.add(this.moonRoot);
-    this.moonLabel = this.makeLabel('月球 · MOON', '#9aa6bb');
+    this.moonLabel = this.makeLabel(bodyLabel('Moon', this.language), '#9aa6bb');
     this.earthFocus = new THREE.Mesh(earthSphere, this.bodies.get('Earth')!.surface.material);
     this.earthFocus.scale.setScalar(3);
     this.earthRoot.add(this.earthFocus);
@@ -145,6 +148,7 @@ export class SolarScene {
     const changedPreset = settings.cameraPreset !== this.settings.cameraPreset;
     const changedQuality = settings.quality !== this.settings.quality;
     this.settings = { ...settings };
+    this.setLanguage(resolveLanguage(settings.language));
     this.solarRoot.visible = settings.viewMode === 'solar';
     this.earthRoot.visible = settings.viewMode === 'earth';
     this.satelliteLayer.configure(settings);
@@ -167,6 +171,16 @@ export class SolarScene {
       }
       this.resize();
     }
+  }
+
+  /** Replace text in place; scene resources, camera and simulation state are retained. */
+  setLanguage(language: Language): void {
+    if (this.disposed || language === this.language) return;
+    this.language = language;
+    this.sunLabel.textContent = bodyLabel('Sun', language);
+    this.moonLabel.textContent = bodyLabel('Moon', language);
+    for (const [name, visual] of this.bodies) visual.label.textContent = bodyLabel(name, language);
+    this.lastLabelAt = -Infinity;
   }
 
   /** Rebuild only on app-scheduled orbit refresh; both paths use the snapshot ephemeris. */

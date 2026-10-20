@@ -3,6 +3,23 @@ import { DEFAULT_SETTINGS, sanitizeSettings } from '../src/settings/Settings';
 import { registerWallpaperBridge, type WallpaperHost } from '../src/settings/WallpaperEngineBridge';
 
 describe('Wallpaper Engine host bridge', () => {
+  it('delivers language separately and preserves it across unrelated partial updates', () => {
+    const host: WallpaperHost = {};
+    let settings = { ...DEFAULT_SETTINGS };
+    const onChange = vi.fn(patch => { settings = sanitizeSettings(settings, patch); });
+    registerWallpaperBridge(onChange, host);
+    host.wallpaperPropertyListener!.applyUserProperties!({ language: { value: 'zh-TW' } });
+    expect(onChange).toHaveBeenLastCalledWith({ language: 'zh-TW' });
+    host.wallpaperPropertyListener!.applyUserProperties!({ showLabels: { value: false } });
+    expect(settings).toMatchObject({ language: 'zh-TW', showLabels: false, showSatellites: false });
+    for (const language of [0, 'fr', 'zh', null, true]) {
+      host.wallpaperPropertyListener!.applyUserProperties!({ language: { value: language } });
+    }
+    expect(onChange).toHaveBeenCalledTimes(2);
+    host.wallpaperPropertyListener!.applyUserProperties!({ language: { value: 'auto' } });
+    expect(settings).toMatchObject({ language: 'auto', showLabels: false });
+  });
+
   it('marks host activity even if an older project delivers no custom settings, only once', () => {
     const host: WallpaperHost = {};
     const onChange = vi.fn(), onHost = vi.fn();

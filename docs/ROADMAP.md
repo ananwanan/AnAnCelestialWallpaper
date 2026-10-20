@@ -63,8 +63,9 @@ Remote ICRF samples validate local EQJ output at the same UTC epoch; the scene r
 - [x] Deployed read-only GP gate status, persisted failure-phase diagnostics and a cooldown-aware serial smoke script. Existing allowances were preserved; no new source request was made during cooldown.
 - [~] Cooldown-safe real STATIONS/GPS attempts at 02:14–02:15 and the final 06:30–06:31 Asia/Shanghai follow-up all timed out after 15s before HTTP headers; no current elements were acquired. The 06:28 scheduled continuation has completed and automatic follow-up has ended. Preserved new gates are 2026-10-20T08:04:34.322Z / 06:37:31.838Z (STATIONS/GPS), not a retry schedule. Investigate the Worker-to-CelesTrak network path before further deliberate source work; no reset or alternate-egress bypass. Real epochs/propagation/rendering remain unverified. See VALIDATION.md.
 
-## M5 — Density and performance: planned
+## M5 — Density, UX and performance: partial
 
+- [x] English/Simplified Chinese/Traditional Chinese runtime language support: `auto` follows browser/CEF language preferences with English fallback; celestial labels display one language, and the optional drawer/host language choice updates UI and accessibility text in place. Typecheck, 369 tests, build and 37 production-browser checks passed; the existing editor project was backed up and updated. Native language-property delivery and native language detection remain unverified; see VALIDATION.md.
 - [ ] Optional Starlink filtering/subsampling, instancing and LOD.
 - [ ] Extended interaction/accessibility polish and long-running iGPU/dGPU profiles.
 - [ ] Native host performance/quality tuning after the M0 gate is resolved.

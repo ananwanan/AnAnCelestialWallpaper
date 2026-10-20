@@ -8,6 +8,21 @@ describe('validated partial wallpaper settings', () => {
     expect(DEFAULT_SETTINGS.syncInterval).toBe(6);
     expect(DEFAULT_SETTINGS.showDesktopSettings).toBe(false);
     expect(DEFAULT_SETTINGS.showStatusBar).toBe(false);
+    expect(DEFAULT_SETTINGS.language).toBe('auto');
+  });
+
+  it.each(['auto', 'en', 'zh-CN', 'zh-TW'])('accepts the exact language hidden value %s', (language) => {
+    expect(normalizeSettingChanges({ language })).toEqual({ language });
+  });
+
+  it('keeps language selection through unrelated changes and rejects unsupported values', () => {
+    const previous = { ...DEFAULT_SETTINGS, language: 'zh-TW' as const, timeScale: 60 };
+    expect(sanitizeSettings(previous, { showLabels: false })).toEqual({ ...previous, showLabels: false });
+    for (const language of ['fr', 'zh', 'zh-cn', 'EN', '', ' auto ', 0, 1, null, true, ['en']]) {
+      expect(sanitizeSettings(previous, { language })).toEqual(previous);
+    }
+    expect(sanitizeSettings(previous, { language: 'en' })).toEqual({ ...previous, language: 'en' });
+    expect(sanitizeSettings(previous, { language: 'auto' })).toEqual({ ...previous, language: 'auto' });
   });
 
   it('keeps native imports quiet before host delivery and preserves HTTP development controls', () => {
