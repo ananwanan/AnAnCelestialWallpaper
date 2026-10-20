@@ -2,7 +2,7 @@
 
 > This file is the authoritative execution brief for coding agents working in this repository. Read it before changing code. The product is a **Wallpaper Engine Web Wallpaper**, not a standalone Electron application or a generic astronomy website.
 
-**Implementation status (2026-10-20):** M0–M3 are implemented; M4 opt-in OMM/SGP4, frame conversion, bounded rendering and shared GP cache are implemented. The GP route is deployed, but first live source operations failed with503 and persisted cooldowns; current catalog acquisition remains unverified. Earth uses a calibrated offline attitude model, approximating UT1 with UTC and omitting polar motion; satellite positions remain labeled approximate predictions. Native acceptance remains partial after confirmed normal restarts and Steam file verification: production/plain HTML previews failed and the Web helper misread IPC arguments as Chromium URLs. Do not claim native editor import, properties, FPS/pause or offline validation. See `docs/VALIDATION.md`, `docs/EARTH_ORIENTATION.md`, `docs/SATELLITES.md` and `docs/ROADMAP.md`.
+**Implementation status (2026-10-20):** M0–M3 and the M4 opt-in pipeline are implemented. The real editor project was backed up and moved to ASCII `projects/myprojects/anan-celestial-wallpaper`, resolving an observed path-encoding failure. Native independent rendering, host property delivery, optional desktop controls, a desktop 15 FPS cap sample (~14.3 FPS), and host pause/resume have evidence. Product native selects triggered a CEF crash; hidden select models now use HTML button/listbox presentation. Desktop controls default OFF. Native page-level blocked-HTTP warm-cache rendering passed; OS disconnection, desktop icons/fullscreen matrix and two-hour soak remain open. The deployed GP service preserved all gates; both the 02:14–02:15 and final 06:30–06:31 Asia/Shanghai cooldown-safe STATIONS/GPS checks timed out at 15s without HTTP headers. Real ISS/Tiangong/GPS acquisition remains unverified. Automatic follow-up has ended; investigate the Worker-to-CelesTrak network path before any further deliberate, gate-approved source operation. Earth uses UT1≈UTC without polar motion; satellites remain approximate predictions. See `docs/VALIDATION.md`, `docs/EARTH_ORIENTATION.md`, `docs/SATELLITES.md` and `docs/ROADMAP.md`.
 
 ## 0. Mission and guardrails
 
@@ -132,16 +132,20 @@ Keys for Wallpaper Engine editor (must match exact names in the host project set
 | Key | Type | Default | Behavior |
 |---|---|---|---|
 | `viewMode` | combo | `solar` | `solar` / `earth` |
+| `cameraPreset` | combo | `default` | `default`, `inner`, `outer`, `earthMoon`; adapts to selected view |
+| `showDesktopSettings` | bool | `false` | Optional desktop navigation/settings/pause controls; hidden by default in local imports |
 | `showSatellites` | bool | `false` | Lazy-load/toggle satellite layer |
 | `satelliteGroup` | combo | `stations` | `stations`, `gps`, later `starlink` |
+| `satelliteSelection` | textinput | `0` | NORAD ID; 0 selects automatically; never invent a missing catalog entry |
 | `syncInterval` | combo | `6` | Planet sync `1`, `6`, `24` hours |
 | `timeScale` | slider | `1` | Simulation speed, e.g. `0` to `86400` |
+| `simulationUtc` | textinput | empty | UTC ISO jump; clearing returns to current UTC while preserving speed |
 | `showOrbits` | bool | `true` | Planet and satellite orbit lines |
 | `showLabels` | bool | `true` | Names + data labels |
 | `enableMouse` | bool | `true` | Camera drag and wheel |
 | `quality` | combo | `medium` | `low`, `medium`, `high` |
 
-The host sends **partial property change objects**; never reset other settings on an unrelated property change. Keep a keyboard/UI fallback in normal browser for development.
+The host sends **partial property change objects**; never reset other settings on an unrelated property change. Keep a keyboard/UI fallback in normal HTTP browser development. In local imports, keep interactive desktop controls and shortcuts disabled unless `showDesktopSettings` is enabled; read-only time/provenance remains visible. Use `scripts/update-wallpaper-project.mjs` only with an existing editor-created project; preserve and back up its metadata.
 
 ## 8. Asset and visual design
 

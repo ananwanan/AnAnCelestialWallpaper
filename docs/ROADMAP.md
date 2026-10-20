@@ -9,10 +9,13 @@ Status: `[x]` implemented with stated evidence; `[~]` partial or acceptance stil
 - [x] Strict TypeScript/Vite/Three.js skeleton, relative assets and offline Sun/eight-planet scene.
 - [x] Deterministic UTC wall-clock, early host listener, validated partial properties and host FPS/pause lifecycle.
 - [x] Clean `npm ci` with zero reported vulnerabilities, local typecheck/test/build and production browser rendering.
-- [~] Actual Wallpaper Engine import/preview: confirmed normal-mode restart at 23:40 Asia/Shanghai (PID 39248; no `-safe`) still produced black previews for both the production wallpaper and no-JavaScript/no-WebGL HTML control. The Web helper treated IPC values as Chromium addresses. Native gate awaits a healthy host; evidence in VALIDATION.md.
-- [ ] Native editor property delivery, FPS/pause and desktop operation verified in Wallpaper Engine.
+- [x] Actual editor import/preview observed on 2026-10-20, including the updated build with desktop controls hidden; real editor-generated metadata is preserved and backed up.
+- [x] Product properties appear in the editor and Wallpaper Engine's main properties panel; optional desktop settings switch defaults OFF.
+- [x] ASCII real-project migration fixed the observed damaged-path startup; final build independently renders. Native HTML button/listbox settings opened, expanded and selected High quality without the earlier select-related CEF crash.
+- [x] Scoped native delivery: desktop-controls and time-rate properties, desktop15 FPS admission (~14.3 measured), actual host pause/resume,11 textures and24 draw calls. See exact coverage in VALIDATION.md.
+- [~] Broader native acceptance: warm blocked-HTTP page test passed; OS-disconnected startup, desktop icon forwarding, fullscreen/display matrix and long-duration measurements remain open.
 
-**Exit remains open:** native web wallpaper must visibly render and its properties work in the real host. Browser evidence does not close this gate.
+**Core native evidence now exists:** import/rendering, tested settings and host lifecycle work within the recorded scope. Remaining release/device gates are M6; browser and native evidence stay separate.
 
 ## M1 — Solar visual quality: implemented and browser verified
 
@@ -56,7 +59,8 @@ Remote ICRF samples validate local EQJ output at the same UTC epoch; the scene r
 - [x] Tested TEME→PEF→EQJ approximation, with Vallado/satellite.js reference cases; approximate prediction labels remain mandatory.
 - [x] ISS/Tiangong (when in catalog)/GPS selection, source epochs/age/altitude, recent/future predicted arcs, stale warnings and out-of-window refusal.
 - [x] Client/shared Worker persisted ≥2-hour per-dataset refresh, bounded cache, cancellation/timeouts, backoff/Retry-After and source-policy halt.
-- [~] Real GP route is deployed, but first source requests returned503; source acquisition remains unavailable with persisted cooldown. Browser default-OFF and honest unavailable states passed; controlled TEST FIXTURE scenes exercise prediction/rendering separately. Native tracking/performance acceptance requires a functioning host. See VALIDATION.md.
+- [x] Deployed read-only GP gate status, persisted failure-phase diagnostics and a cooldown-aware serial smoke script. Existing allowances were preserved; no new source request was made during cooldown.
+- [~] Cooldown-safe real STATIONS/GPS attempts at 02:14–02:15 and the final 06:30–06:31 Asia/Shanghai follow-up all timed out after 15s before HTTP headers; no current elements were acquired. The 06:28 scheduled continuation has completed and automatic follow-up has ended. Preserved new gates are 2026-10-20T08:04:34.322Z / 06:37:31.838Z (STATIONS/GPS), not a retry schedule. Investigate the Worker-to-CelesTrak network path before further deliberate source work; no reset or alternate-egress bypass. Real epochs/propagation/rendering remain unverified. See VALIDATION.md.
 
 ## M5 — Density and performance: planned
 
@@ -66,7 +70,7 @@ Remote ICRF samples validate local EQJ output at the same UTC epoch; the scene r
 
 ## M6 — Wallpaper Engine release: planned
 
-- [ ] Verified editor import and all user properties in the real host.
+- [~] Editor/independent rendering,13 property definitions and scoped native property/FPS/pause checks passed. Full property/device matrix remains unverified.
 - [ ] Offline/FPS/pause/Windows/resolution matrix and two-hour soak completed.
 - [ ] Final source-code license decision, notices, release preview and standalone bundle audit.
 - [ ] Owner explicitly approves Workshop publication.

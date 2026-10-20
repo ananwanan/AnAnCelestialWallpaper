@@ -23,10 +23,16 @@ declare global {
 export function registerWallpaperBridge(
   onChange: (changes: Partial<WallpaperSettings>) => void,
   host: WallpaperHost = window,
+  onHostActivity: () => void = () => {},
 ): () => void {
   const previous = host.wallpaperPropertyListener;
   const hadOwnListener = Object.hasOwn(host, 'wallpaperPropertyListener');
   let disposed = false;
+  let connected = false;
+  const noteHost = (): void => {
+    if (disposed || connected) return;
+    connected = true; onHostActivity();
+  };
   const emit = (changes: unknown): void => {
     if (disposed) return;
     const patch = normalizeSettingChanges(changes);
@@ -35,6 +41,7 @@ export function registerWallpaperBridge(
   const listener: WallpaperHostListener = {
     ...previous,
     applyUserProperties(props) {
+      noteHost();
       const changed: Record<string, unknown> = {};
       for (const key of USER_PROPERTY_KEYS) {
         const value = ownProperty(ownProperty(props, key), 'value');
@@ -43,9 +50,10 @@ export function registerWallpaperBridge(
       emit(changed);
     },
     applyGeneralProperties(props) {
+      noteHost();
       emit({ fps: ownProperty(props, 'fps') });
     },
-    setPaused(paused) { emit({ paused }); },
+    setPaused(paused) { noteHost(); emit({ paused }); },
   };
   host.wallpaperPropertyListener = listener;
   return () => {

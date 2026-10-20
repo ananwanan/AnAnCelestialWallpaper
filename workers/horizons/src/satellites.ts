@@ -14,6 +14,11 @@ function abortable<T>(operation: Promise<T>, signal: AbortSignal): Promise<T> {
 }
 interface SatelliteEnv { UPSTREAM_USER_AGENT: string; }
 interface GateState { version: 1; next: Record<SatelliteGroup, number>; failures: Record<SatelliteGroup, number>; blocked: string | null; }
+interface AttemptDiagnostic {
+  startedAt: string; completedAt: string; durationMs: number;
+  outcome: 'success' | 'timeout' | 'transport' | 'http' | 'validation' | 'configuration' | 'storage';
+  upstreamStatus: number | null; message: string | null;
+}
 export function satelliteGroup(url: URL): SatelliteGroup {
   const keys = [...url.searchParams.keys()];
   const group = url.searchParams.get('group');
@@ -37,6 +42,11 @@ export class SatellitesGate implements DurableObject {
   }
   async fetch(request: Request): Promise<Response> {
     if (request.method !== 'GET' || request.body !== null) return errorResponse('Only bodyless GET is supported.', 405);
+    const url = new URL(request.url);
+    if (url.pathname === '/api/satellites/status') {
+      if (url.search) return errorResponse('Satellite status does not accept query parameters.', 400);
+      return this.status();
+    }
     let group: SatelliteGroup;
     try { group = satelliteGroup(new URL(request.url)); } catch (error) { return errorResponse(error instanceof Error ? error.message : 'Invalid group.', 400); }
     if (this.active) {
@@ -47,6 +57,23 @@ export class SatellitesGate implements DurableObject {
     const promise = this.operation(group);
     const active = { group, promise, waiters: 0 }; this.active = active;
     try { return (await promise).clone(); } finally { if (this.active === active) this.active = null; }
+  }
+  /** Read-only diagnostics never reserve allowance, fetch CelesTrak or clear a provider halt. */
+  private async status(): Promise<Response> {
+    const now = Date.now();
+    const datasets = await Promise.all((['stations', 'gps'] as const).map(async group => {
+      let dataset: SatelliteDataset | null = null;
+      try { const cached = await this.ctx.storage.get(`dataset:${group}`); if (cached) dataset = validateSatelliteDataset(cached, now, group); } catch { /* Report unusable cache, without changing the allowance. */ }
+      const lastAttempt = await this.ctx.storage.get<AttemptDiagnostic>(`diagnostic:${group}`) ?? null;
+      return { group, nextAllowedAt: new Date(this.state.next[group]).toISOString(),
+        retryAfterSeconds: Math.max(0, Math.ceil((this.state.next[group] - now) / 1000)),
+        failureCount: this.state.failures[group], cachedRecords: dataset?.records.length ?? 0,
+        retrievedAt: dataset?.retrievedAt ?? null, epoch: dataset?.epoch ?? null, lastAttempt };
+    }));
+    return new Response(JSON.stringify({ schemaVersion: 1, checkedAt: new Date(now).toISOString(),
+      source: 'CelesTrak-GP', minimumRefreshSeconds: SATELLITE_MIN_REFRESH_MS / 1000,
+      blocked: this.state.blocked, activeGroup: this.active?.group ?? null, datasets }),
+    { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
   }
   private async operation(group: SatelliteGroup): Promise<Response> {
     const now = Date.now();
@@ -74,24 +101,39 @@ export class SatellitesGate implements DurableObject {
     this.state.next[group] = now + SATELLITE_MIN_REFRESH_MS;
     await this.ctx.storage.put('satellite-gate', structuredClone(this.state)); // Reserve BEFORE yielding to upstream.
     const controller = new AbortController(), timer = setTimeout(() => controller.abort('CelesTrak timed out.'), TIMEOUT_MS);
-    let retry = 0;
+    let retry = 0, upstreamStatus: number | null = null;
+    let stage: AttemptDiagnostic['outcome'] = 'configuration';
+    const diagnostic = async (outcome: AttemptDiagnostic['outcome'], message: string | null) => {
+      const completed = Date.now();
+      try {
+        await this.ctx.storage.put(`diagnostic:${group}`, { startedAt: new Date(now).toISOString(),
+          completedAt: new Date(completed).toISOString(), durationMs: Math.max(0, completed - now), outcome,
+          upstreamStatus, message: message?.replace(/[\u0000-\u001f]/g, ' ').slice(0, 256) ?? null } satisfies AttemptDiagnostic);
+      } catch { console.warn('CelesTrak diagnostic persistence unavailable', group); }
+    };
     try {
       if (!this.env.UPSTREAM_USER_AGENT || this.env.UPSTREAM_USER_AGENT.length > 256 || /[\r\n]/.test(this.env.UPSTREAM_USER_AGENT)) throw new Error('Invalid upstream identification.');
       const query = group === 'stations' ? 'STATIONS' : 'GPS-OPS';
+      stage = 'transport';
       const upstream = await abortable(fetch(`${UPSTREAM}?GROUP=${query}&FORMAT=JSON`, { method: 'GET', redirect: 'manual', signal: controller.signal,
         headers: { 'Accept': 'application/json', 'User-Agent': this.env.UPSTREAM_USER_AGENT } }), controller.signal);
+      upstreamStatus = upstream.status;
       retry = retryAfterMs(upstream.headers.get('Retry-After'), Date.now());
       if (upstream.status !== 200) {
+        stage = 'http';
         void upstream.body?.cancel().catch(() => undefined);
         this.state.blocked = `CelesTrak HTTP ${upstream.status}; source requests halted under its usage policy. Owner investigation is required.`;
         throw new Error(this.state.blocked);
       }
+      stage = 'validation';
       if (!upstream.headers.get('Content-Type')?.toLowerCase().includes('application/json')) { void upstream.body?.cancel().catch(() => undefined); throw new Error('CelesTrak did not return JSON.'); }
       const data = createSatelliteDataset(JSON.parse(await abortable(boundedText(upstream, controller.signal), controller.signal)), group, Date.now());
+      stage = 'storage';
       await this.ctx.storage.put(`dataset:${group}`, data);
       this.state.failures[group] = 0;
       this.state.next[group] = Math.max(this.state.next[group], Date.now() + retry);
       await this.ctx.storage.put('satellite-gate', structuredClone(this.state));
+      await diagnostic('success', null);
       return respond(data, 'MISS', Math.max(0, this.state.next[group] - Date.now()));
     } catch (error) {
       this.state.failures[group] = Math.min(10, this.state.failures[group] + 1);
@@ -99,7 +141,9 @@ export class SatellitesGate implements DurableObject {
       const delay = Math.max(retry, Math.min(24 * HOUR_MS, backoff * (1 + Math.random() * 0.2)));
       this.state.next[group] = Math.max(this.state.next[group], Date.now() + delay);
       await this.ctx.storage.put('satellite-gate', structuredClone(this.state));
-      console.warn('CelesTrak request failed', error instanceof Error ? error.message : 'unknown error');
+      const message = error instanceof Error ? error.message : 'unknown error';
+      await diagnostic(controller.signal.aborted ? 'timeout' : stage, message);
+      console.warn('CelesTrak request failed', group, controller.signal.aborted ? 'timeout' : stage, upstreamStatus, message);
       return unavailable(this.state.blocked ?? 'CelesTrak temporarily unavailable; cached elements are retained when usable.', 503, this.state.next[group] - Date.now());
     } finally { clearTimeout(timer); controller.abort('CelesTrak operation finished.'); }
   }

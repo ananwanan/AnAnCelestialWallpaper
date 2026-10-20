@@ -1,11 +1,44 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_SETTINGS, normalizeSettingChanges, sanitizeSettings } from '../src/settings/Settings';
+import { DEFAULT_SETTINGS, desktopSettingsAvailable, normalizeSettingChanges, resolveCameraPreset, sanitizeSettings } from '../src/settings/Settings';
 
 describe('validated partial wallpaper settings', () => {
   it('starts satellite work disabled and limits the browser fallback to 30 FPS', () => {
     expect(DEFAULT_SETTINGS.showSatellites).toBe(false);
     expect(DEFAULT_SETTINGS.fps).toBe(30);
     expect(DEFAULT_SETTINGS.syncInterval).toBe(6);
+    expect(DEFAULT_SETTINGS.showDesktopSettings).toBe(false);
+  });
+
+  it('keeps native imports quiet before host delivery and preserves HTTP development controls', () => {
+    expect(desktopSettingsAvailable(DEFAULT_SETTINGS, 'file:', false)).toBe(false);
+    expect(desktopSettingsAvailable(DEFAULT_SETTINGS, 'file:', true)).toBe(false);
+    expect(desktopSettingsAvailable(DEFAULT_SETTINGS, 'http:', false)).toBe(true);
+    expect(desktopSettingsAvailable(DEFAULT_SETTINGS, 'http:', true)).toBe(false);
+    expect(desktopSettingsAvailable({ showDesktopSettings: true }, 'file:', true)).toBe(true);
+  });
+
+  it('validates explicit NORAD selection without triggering a catalog-group change', () => {
+    expect(normalizeSettingChanges({ satelliteSelection: '48274' })).toEqual({ satelliteSelection: 48274 });
+    expect(normalizeSettingChanges({ satelliteSelection: 25544 })).toEqual({ satelliteSelection: 25544 });
+    expect(normalizeSettingChanges({ satelliteSelection: '0' })).toEqual({ satelliteSelection: 0 });
+    for (const satelliteSelection of ['', '-1', -1, '025544', '25544.5', 25544.5, '1e6', 1_000_000_000, null]) {
+      expect(normalizeSettingChanges({ satelliteSelection })).toEqual({});
+    }
+    expect(sanitizeSettings(DEFAULT_SETTINGS, { satelliteSelection: '48274' }).satelliteGroup).toBe('stations');
+  });
+
+  it('accepts only canonical bounded UTC dates and the explicit reset-to-now empty value', () => {
+    expect(normalizeSettingChanges({ simulationUtc: '2026-10-20T01:02:03Z' })).toEqual({ simulationUtc: '2026-10-20T01:02:03.000Z' });
+    expect(normalizeSettingChanges({ simulationUtc: '2026-10-20T01:02:03.123Z' })).toEqual({ simulationUtc: '2026-10-20T01:02:03.123Z' });
+    expect(normalizeSettingChanges({ simulationUtc: '' })).toEqual({ simulationUtc: '' });
+    for (const simulationUtc of ['2026-02-30T00:00:00Z', '2026-10-20T01:02:03+08:00', '1961-12-31T00:00:00Z', '2101-01-01T00:00:00Z', 'now', true]) expect(normalizeSettingChanges({ simulationUtc })).toEqual({});
+  });
+
+  it('keeps camera presets compatible with independently changing Earth/Solar views', () => {
+    expect(resolveCameraPreset({ viewMode: 'solar', cameraPreset: 'inner' })).toBe('inner');
+    expect(resolveCameraPreset({ viewMode: 'earth', cameraPreset: 'inner' })).toBe('earth');
+    expect(resolveCameraPreset({ viewMode: 'earth', cameraPreset: 'earthMoon' })).toBe('earthMoon');
+    expect(resolveCameraPreset({ viewMode: 'solar', cameraPreset: 'earthMoon' })).toBe('overview');
   });
 
   it('preserves every unrelated setting across a sequence of partial updates', () => {

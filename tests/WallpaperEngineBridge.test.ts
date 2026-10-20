@@ -3,6 +3,30 @@ import { DEFAULT_SETTINGS, sanitizeSettings } from '../src/settings/Settings';
 import { registerWallpaperBridge, type WallpaperHost } from '../src/settings/WallpaperEngineBridge';
 
 describe('Wallpaper Engine host bridge', () => {
+  it('marks host activity even if an older project delivers no custom settings, only once', () => {
+    const host: WallpaperHost = {};
+    const onChange = vi.fn(), onHost = vi.fn();
+    const dispose = registerWallpaperBridge(onChange, host, onHost);
+    host.wallpaperPropertyListener!.applyUserProperties!({ schemecolor: { value: '0 0 0' } });
+    host.wallpaperPropertyListener!.applyGeneralProperties!({ fps: 30 });
+    host.wallpaperPropertyListener!.setPaused!(false);
+    expect(onHost).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls).toEqual([[{ fps: 30 }], [{ paused: false }]]);
+    dispose();
+  });
+
+  it('applies host-only control visibility, camera, UTC and satellite selection as partial changes', () => {
+    const host: WallpaperHost = {};
+    let settings = { ...DEFAULT_SETTINGS };
+    registerWallpaperBridge(patch => { settings = sanitizeSettings(settings, patch); }, host);
+    host.wallpaperPropertyListener!.applyUserProperties!({
+      showDesktopSettings: { value: true }, cameraPreset: { value: 'earthMoon' },
+      satelliteSelection: { value: '48274' }, simulationUtc: { value: '2026-10-20T00:00:00Z' },
+    });
+    host.wallpaperPropertyListener!.applyUserProperties!({ showDesktopSettings: { value: false } });
+    expect(settings).toMatchObject({ showDesktopSettings: false, cameraPreset: 'earthMoon', satelliteSelection: 48274,
+      simulationUtc: '2026-10-20T00:00:00.000Z', showSatellites: false, fps: 30 });
+  });
   it('installs synchronously and accepts initial properties before a scene exists', () => {
     const host: WallpaperHost = {};
     let settings = { ...DEFAULT_SETTINGS };

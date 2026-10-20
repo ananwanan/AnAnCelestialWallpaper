@@ -62,7 +62,7 @@ export default {
     const finish = (response: Response) => withCors(response, origin);
     try {
       const url = new URL(request.url);
-      if (!['/api/horizons.api', '/api/ephemeris', '/api/satellites', '/health'].includes(url.pathname)) return finish(errorResponse('Not found.', 404));
+      if (!['/api/horizons.api', '/api/ephemeris', '/api/satellites', '/api/satellites/status', '/health'].includes(url.pathname)) return finish(errorResponse('Not found.', 404));
       if (request.method === 'OPTIONS') {
         const method = request.headers.get('Access-Control-Request-Method');
         if (method !== 'GET' || request.headers.get('Access-Control-Request-Headers')) {
@@ -76,10 +76,11 @@ export default {
         return finish(response);
       }
       if (request.body !== null || Number(request.headers.get('Content-Length')) > 0) return finish(errorResponse('Request bodies are not supported.', 400));
-      if (url.pathname === '/api/satellites') {
-        const group = satelliteGroup(url);
+      if (url.pathname === '/api/satellites' || url.pathname === '/api/satellites/status') {
+        if (url.pathname === '/api/satellites/status' && url.search) throw new PolicyError('Satellite status does not accept query parameters.');
+        const group = url.pathname === '/api/satellites' ? satelliteGroup(url) : null;
         const gate = env.SATELLITES_GATE.get(env.SATELLITES_GATE.idFromName('celestrak-global-v1'));
-        return finish(await gate.fetch(new Request(`https://satellites.internal/api/satellites?group=${group}`)));
+        return finish(await gate.fetch(new Request(`https://satellites.internal${group ? `/api/satellites?group=${group}` : '/api/satellites/status'}`)));
       }
       if (url.pathname === '/health') {
         return finish(new Response(JSON.stringify({ status: 'ok', service: 'AnAnCelestialWallpaper Horizons proxy', upstream: UPSTREAM_URL, apiVersion: '1.2', endpoint: '/api/horizons.api', normalizedEphemeris: true, normalizedEndpoint: '/api/ephemeris?at=<UTC ISO>', comparisonOnly: true }), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } }));

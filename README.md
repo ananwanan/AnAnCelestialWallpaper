@@ -2,7 +2,7 @@
 
 **Offline-capable Three.js / WebGL solar-system wallpaper for Wallpaper Engine.**
 
-M0–M3 and the M4 satellite pipeline are implemented. Earth orientation, texture alignment, independent Earth/Moon scale and opt-in SGP4 tracking have explicit tested contracts. **Native Wallpaper Engine acceptance remains partial:** a confirmed restart in normal mode still produced black Web previews, including a plain HTML control. Its Web helper misinterpreted IPC arguments as Chromium URLs. This is not yet a Workshop-ready release. See [validation evidence and remaining gates](docs/VALIDATION.md).
+M0–M3 and the M4 satellite pipeline are implemented. Earth orientation, texture alignment, independent Earth/Moon scale and opt-in SGP4 tracking have explicit tested contracts. Native editor preview, independent playback and desktop rendering now work from the migrated ASCII project path. The final desktop build has native host-property, 15 FPS cap and pause/resume evidence; its optional settings drawer uses HTML listboxes and has passed native opening/selection checks. **Native acceptance remains partial:** offline operation, desktop-icon/fullscreen behavior, the full display/quality matrix and a two-hour resource soak remain open. Real satellite acquisition awaits a cooldown-safe service follow-up. This is not yet a Workshop-ready release. See [validation evidence and remaining gates](docs/VALIDATION.md).
 
 ## Run and build
 
@@ -20,7 +20,7 @@ npm run build
 npm run preview
 ```
 
-`dist/` is the complete static wallpaper: scripts, fonts supplied by the system and all texture files work without a CDN. Import **`dist/index.html`** as a Web wallpaper in the Wallpaper Engine editor; the editor manages its project files. Do not import the repository or `node_modules`. Native import, FPS and pause acceptance are tracked separately in [Wallpaper Engine integration](docs/WALLPAPER_ENGINE.md).
+`dist/` is the complete static wallpaper: scripts, fonts supplied by the system and all texture files work without a CDN. Import **`dist/index.html`** as a Web wallpaper in the Wallpaper Engine editor; the editor manages its project files. Use an ASCII project-directory name: the former em-dash directory was misencoded by a native launch route. The existing local project is now `D:\SteamLibrary\steamapps\common\wallpaper_engine\projects\myprojects\anan-celestial-wallpaper`. Do not import the repository or `node_modules`. Import/update instructions, the backed-up relocation helper and native acceptance boundaries are in [Wallpaper Engine integration](docs/WALLPAPER_ENGINE.md).
 
 After building, run `./scripts/package-wallpaper.ps1` to create `artifacts/AnAnCelestialWallpaper-web.zip` and a SHA-256 build manifest. The ZIP is a local test import bundle; its `project.json` must be created by the Wallpaper Engine editor. Runtime library licenses are included in `public/THIRD_PARTY_NOTICES.txt` and texture credits in `public/textures/ATTRIBUTION.md`.
 
@@ -28,9 +28,9 @@ After building, run `./scripts/package-wallpaper.ps1` to create `artifacts/AnAnC
 
 - Textured Sun, eight planets and Moon; Sun glow/corona, Saturn rings, subtle stars and inclined ephemeris-sampled paths.
 - Camera drag/wheel, smooth overview/inner/outer presets, calibrated Earth close-up and physical Earth–Moon overview; labels avoid each other and the HUD.
-- The **显示与时间** drawer controls labels, paths, mouse interaction, Low/Medium/High quality, UTC date jump, time speed and 1/6/24-hour remote-comparison cadence.
+- Wallpaper Engine's property panel controls views, cameras, labels, paths, mouse interaction, quality, UTC/speed, satellite selection and remote-comparison cadence. **在桌面显示设置控件** defaults OFF; enable it for the optional **显示与时间** drawer. Its HTML listboxes support mouse, arrow/Home/End keys, Enter/Space selection and Escape/Tab dismissal. HTTP browser development keeps its fallback. [Update an existing editor import](docs/WALLPAPER_ENGINE.md#build-and-editor-import) with the backed-up property/resource migration helper.
 - Footer pause freezes simulation time and resumes the last positive rate; **回到现在** resets to current UTC at 1×. Host pause suspends rendering and comparison polling while the wall-clock simulation catches up on resume.
-- Keys: **S** Solar System, **E** Earth, **R** reset camera, **O** paths, **L** labels, **Space** simulation pause/resume, **Esc** close settings. Shortcuts preserve normal input/button keyboard behavior.
+- With desktop controls enabled: **S** Solar System, **E** Earth, **R** reset camera, **O** paths, **L** labels, **Space** simulation pause/resume, **Esc** close settings. Hidden controls disable these shortcuts so desktop typing cannot change the wallpaper.
 - Opt-in **显示预测卫星** with ISS/Tiangong or GPS groups, satellite selection, NORAD ID/OMM epoch/age/altitude, and cyan recent / gold future predicted arcs. Disabled by default; disabling aborts requests and clears propagation/draw work. A configured shared GP service is required for fresh data.
 
 The Solar view compresses orbital distances (`26 × ln(1 + distanceAU)`), exaggerates body sizes and expands the geocentric Moon offset 70×. Earth focus uses a separate uniform km scale for Earth, Moon and satellites. Earth's pole, spin and Greenwich texture alignment use a local sidereal-time/precession/nutation model; UT1≈UTC and omitted polar motion limit precision. Other bodies' poles and lunar surface orientation remain illustrative. See [Earth calibration](docs/EARTH_ORIENTATION.md).

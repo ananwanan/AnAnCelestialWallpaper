@@ -1,0 +1,34 @@
+{
+  "viewMode": {
+    "type": "combo", "text": "视角", "value": "solar", "order": 10,
+    "options": [{"label": "太阳系", "value": "solar"}, {"label": "地球与卫星", "value": "earth"}]
+  },
+  "cameraPreset": {
+    "type": "combo", "text": "镜头预设（随视角适配）", "value": "default", "order": 20,
+    "options": [{"label": "默认全景 / 地球特写", "value": "default"}, {"label": "太阳系 · 内行星", "value": "inner"}, {"label": "太阳系 · 外行星", "value": "outer"}, {"label": "地球 · 地月全景", "value": "earthMoon"}]
+  },
+  "showDesktopSettings": {"type": "bool", "text": "在桌面显示设置控件", "value": false, "order": 30},
+  "showSatellites": {"type": "bool", "text": "显示预测卫星（默认关闭）", "value": false, "order": 40},
+  "satelliteGroup": {
+    "type": "combo", "text": "卫星数据组", "value": "stations", "order": 50,
+    "options": [{"label": "ISS / 天宫", "value": "stations"}, {"label": "GPS", "value": "gps"}],
+    "condition": "showSatellites.value == true"
+  },
+  "satelliteSelection": {
+    "type": "textinput", "text": "卫星 NORAD 编号：0 自动，ISS 25544，天宫 48274", "value": "0", "order": 60,
+    "condition": "showSatellites.value == true"
+  },
+  "showOrbits": {"type": "bool", "text": "显示轨道与预测弧线", "value": true, "order": 70},
+  "showLabels": {"type": "bool", "text": "显示天体名称", "value": true, "order": 80},
+  "enableMouse": {"type": "bool", "text": "允许鼠标拖动与缩放", "value": true, "order": 90},
+  "quality": {
+    "type": "combo", "text": "画质", "value": "medium", "order": 100,
+    "options": [{"label": "低 · 节能", "value": "low"}, {"label": "中 · 均衡", "value": "medium"}, {"label": "高 · 精细", "value": "high"}]
+  },
+  "timeScale": {"type": "slider", "text": "时间倍率：0 暂停，1 实时", "value": 1, "order": 110, "min": 0, "max": 86400, "fraction": false, "step": 1},
+  "simulationUtc": {"type": "textinput", "text": "跳转 UTC：如 2026-10-20T00:00:00Z；清空回到现在", "value": "", "order": 120},
+  "syncInterval": {
+    "type": "combo", "text": "远程校验间隔（卫星最短 2 小时）", "value": "6", "order": 130,
+    "options": [{"label": "1 小时", "value": "1"}, {"label": "6 小时", "value": "6"}, {"label": "24 小时", "value": "24"}]
+  }
+}

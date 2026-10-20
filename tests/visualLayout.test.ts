@@ -1,9 +1,20 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { PerspectiveCamera, Vector3 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { SolarScene } from '../src/render/SolarScene';
+import { DEFAULT_SETTINGS } from '../src/settings/Settings';
 import { DISPLAY_SCALE, QUALITY_PRESETS, solarDisplayPosition, moonDisplayOffset, minimumCameraDistance, solarPresetAspectScale, cameraDistanceBounds, placeLabel, rectanglesOverlap } from '../src/render/visualModel';
 
 describe('artistic display model', () => {
+  it.each([
+    ['solar', 'inner', 'inner'], ['solar', 'outer', 'outer'], ['earth', 'earthMoon', 'earthMoon'],
+  ] as const)('retains the initial host %s/%s preset during the constructor camera reset', (viewMode, cameraPreset, expected) => {
+    const setCameraPreset = vi.fn();
+    const startupScene = { settings: { ...DEFAULT_SETTINGS, viewMode, cameraPreset }, preset: 'overview', setCameraPreset };
+    // Exercise the exact reset method called by the constructor, without WebGL setup.
+    SolarScene.prototype.resetCamera.call(startupScene as unknown as SolarScene, true);
+    expect(setCameraPreset).toHaveBeenCalledExactlyOnceWith(expected, true);
+  });
   it('compresses distance monotonically while preserving inclination and Y-up handedness', () => {
     const inner = solarDisplayPosition({ x: 1, y: 2, z: 3 });
     const outer = solarDisplayPosition({ x: 10, y: 20, z: 30 });

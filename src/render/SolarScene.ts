@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { PLANET_NAMES, type PlanetName, type SolarSnapshot, type SolarTrajectories, type Vec3Au } from '../astronomy/planetEphemeris';
 import { AU_KM, MOON_RADIUS_KM, type EarthViewSnapshot } from '../astronomy/earthOrientation';
-import type { WallpaperSettings } from '../settings/Settings';
+import { resolveCameraPreset, type WallpaperSettings } from '../settings/Settings';
 import type { SatelliteSnapshot, SatelliteTrajectory } from '../satellites/types';
 import { SatelliteLayer } from './SatelliteLayer';
 import { DISPLAY_SCALE, PLANET_VISUALS, QUALITY_PRESETS, placeLabel, solarDisplayPosition, moonDisplayOffset, earthFocusPositionKm, earthSphereBasis, minimumCameraDistance, solarPresetAspectScale, cameraDistanceBounds, type LabelRect } from './visualModel';
@@ -142,6 +142,7 @@ export class SolarScene {
   applySettings(settings: WallpaperSettings): void {
     if (this.disposed) return;
     const changedMode = settings.viewMode !== this.settings.viewMode;
+    const changedPreset = settings.cameraPreset !== this.settings.cameraPreset;
     const changedQuality = settings.quality !== this.settings.quality;
     this.settings = { ...settings };
     this.solarRoot.visible = settings.viewMode === 'solar';
@@ -149,7 +150,7 @@ export class SolarScene {
     this.satelliteLayer.configure(settings);
     this.controls.enabled = settings.enableMouse;
     // Capture the existing camera before a quality resize uses the new scene's aspect scale.
-    if (changedMode) this.setCameraPreset(settings.viewMode === 'earth' ? 'earth' : 'overview');
+    if (changedMode || changedPreset) this.setCameraPreset(resolveCameraPreset(settings));
     this.orbitLines.forEach(line => { line.visible = settings.showOrbits; });
     this.labelLayer.style.display = settings.showLabels ? '' : 'none';
     const quality = QUALITY_PRESETS[settings.quality];
@@ -235,7 +236,7 @@ export class SolarScene {
     }
   }
 
-  resetCamera(immediate = false): void { this.setCameraPreset(this.settings.viewMode === 'earth' ? 'earth' : this.preset === 'earth' || this.preset === 'earthMoon' ? 'overview' : this.preset, immediate); }
+  resetCamera(immediate = false): void { this.setCameraPreset(resolveCameraPreset(this.settings), immediate); }
 
   render(snapshot: SolarSnapshot, earth: EarthViewSnapshot): void {
     if (this.disposed) return;
